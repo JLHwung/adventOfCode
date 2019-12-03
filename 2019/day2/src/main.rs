@@ -1,14 +1,18 @@
 use std::fs::File;
-use std::io::{self, prelude::*};
+use std::io::{self, prelude::*, BufReader};
 use std::vec;
+use std::str;
 
 fn main() -> io::Result<()> {
-    let mut file = File::open("./data/input.txt")?;
-    let mut contents = String::new();
-    file.read_to_string(&mut contents)?;
+    let file = File::open("./data/input.txt")?;
+    let reader = BufReader::new(file);
 
-    let values: vec::Vec<u32> = contents.split(',').map(|x| {
-        x.trim_end().parse().unwrap()
+    let values: vec::Vec<u32> = reader.split(b',').map(|x| {
+        str::from_utf8(&(
+            x.unwrap())
+        ).unwrap()
+            .trim_end()
+            .parse().unwrap()
     }).collect();
 
     for noun in 0..99 {
