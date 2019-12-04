@@ -16,35 +16,34 @@ fn main() -> io::Result<()> {
     let w1 = wire_to_segments(&wires[0]);
     let w2 = wire_to_segments(&wires[1]);
 
-    let intersections = find_intersections(&w1, &w2);
-    let p = find_closest(&intersections);
-    println!("{}", p[0].abs() + p[1].abs());
+    let r = find_intersection_lowest_delay(&w1, &w2);
+    println!("{}", r);
     Ok(())
 }
 
-type Point = [i32; 2];
 type Segment = [[i32; 2]; 2];
 
 fn is_vertical(seg: &Segment) -> bool {
     seg[0][0] == seg[1][0]
 }
 
-fn find_intersections(wire1: &Vec<Segment>, wire2: &Vec<Segment>) -> Vec<Point> {
-    let mut result: Vec<Point> = Vec::new();
-    for s1 in wire1 {
+fn find_intersection_lowest_delay(wire1: &Vec<Segment>, wire2: &Vec<Segment>) -> i32 {
+    let mut s1_cost = 0;
+    let mut min_cost = i32::MAX;
+    'outer: for s1 in wire1 {
+        let mut s2_cost = 0;
         if is_vertical(&s1) {
             // vertical
             for s2 in wire2 {
                 if is_vertical(&s2) {
                     if s1[0][0] != s2[0][0] {
-                        continue;
                     } else {
                         if cmp::min(s1[0][1], s1[1][1]) > cmp::min(s2[0][1], s2[1][1])
                             || cmp::max(s1[0][1], s1[1][1]) < cmp::max(s2[0][1], s2[1][1])
                         {
-                            continue;
+                        } else {
+                            panic!("You need to write more")
                         }
-                        panic!("You need to write more")
                     }
                 } else {
                     if cmp::max(s2[0][0], s2[1][0]) < s1[0][0]
@@ -52,23 +51,28 @@ fn find_intersections(wire1: &Vec<Segment>, wire2: &Vec<Segment>) -> Vec<Point> 
                         || cmp::max(s1[0][1], s1[1][1]) < s2[0][1]
                         || cmp::min(s1[0][1], s1[1][1]) > s2[0][1]
                     {
-                        continue;
+                    } else {
+                        let cost =
+                            s1_cost + s2_cost + (s1[0][1] - s2[0][1]).abs() + (s2[0][0] - s1[0][0]).abs();
+                        if cost < min_cost && cost != 0 {
+                            min_cost = cost;
+                        }
+                        break;
                     }
-                    result.push([s1[0][0], s2[0][1]])
                 }
+                s2_cost += cmp::max((s2[0][1] - s2[1][1]).abs(), (s2[0][0] - s2[1][0]).abs());
             }
         } else {
             for s2 in wire2 {
                 if !is_vertical(&s2) {
                     if s1[0][1] != s2[0][1] {
-                        continue;
                     } else {
                         if cmp::min(s1[0][0], s1[1][0]) > cmp::min(s2[0][0], s2[1][0])
                             || cmp::max(s1[0][0], s1[1][0]) < cmp::max(s2[0][0], s2[1][0])
                         {
-                            continue;
+                        } else {
+                            panic!("You need to write more")
                         }
-                        panic!("You need to write more")
                     }
                 } else {
                     if cmp::max(s1[0][0], s1[1][0]) < s2[0][0]
@@ -76,27 +80,21 @@ fn find_intersections(wire1: &Vec<Segment>, wire2: &Vec<Segment>) -> Vec<Point> 
                         || cmp::max(s2[0][1], s2[1][1]) < s1[0][1]
                         || cmp::min(s2[0][1], s2[1][1]) > s1[0][1]
                     {
-                        continue;
+                    } else {
+                        let cost =
+                            s1_cost + s2_cost + (s1[0][1] - s2[0][1]).abs() + (s2[0][0] - s1[0][0]).abs();
+                        if cost < min_cost && cost != 0 {
+                            min_cost = cost;
+                        }
+                        break;
                     }
-                    result.push([s2[0][0], s1[0][1]])
                 }
+                s2_cost += cmp::max((s2[0][1] - s2[1][1]).abs(), (s2[0][0] - s2[1][0]).abs());
             }
         }
+        s1_cost += cmp::max((s1[0][1] - s1[1][1]).abs(), (s1[0][0] - s1[1][0]).abs());
     }
-    result
-}
-
-fn find_closest(points: &Vec<Point>) -> &Point {
-    let mut min_distance = i32::MAX;
-    let mut result = &[i32::MAX, i32::MAX];
-    for p in points {
-        let d = p[0].abs() + p[1].abs();
-        if d < min_distance {
-            result = p;
-            min_distance = d;
-        }
-    }
-    result
+    min_cost
 }
 
 fn wire_to_segments(wire: &str) -> Vec<Segment> {
@@ -123,9 +121,7 @@ fn wire_to_segments(wire: &str) -> Vec<Segment> {
                 panic!();
             }
         }
-        if start[0] != 0 && start[0] != 0 {
-            result.push([start.clone(), new_start.clone()]);
-        }
+        result.push([start.clone(), new_start.clone()]);
         start = new_start;
     }
     return result;
