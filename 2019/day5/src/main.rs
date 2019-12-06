@@ -17,7 +17,7 @@ fn main() -> io::Result<()> {
         })
         .collect();
 
-    let mut stdin = [1].to_vec();
+    let mut stdin = [5].to_vec();
     let mut stdout = Vec::new();
     let diagnostic_code = intcode_interpreter(&memory, &mut stdin, &mut stdout);
     println!("{}", diagnostic_code);
@@ -54,7 +54,8 @@ fn intcode_interpreter(mem: &Vec<i32>, stdin: &mut Vec<i32>, stdout: &mut Vec<i3
     loop {
         let parsed = parse_opcode(memory[pc]);
         match parsed[0] {
-            1 | 2 => {
+            // add, mul
+            1 | 2 | 7 | 8=> {
                 let input1 = resolve_value(&memory, memory[pc + 1], parsed[1]);
                 let input2= resolve_value(&memory, memory[pc + 2], parsed[2]);
                 let operand = memory[pc + 3] as usize;
@@ -65,21 +66,41 @@ fn intcode_interpreter(mem: &Vec<i32>, stdin: &mut Vec<i32>, stdout: &mut Vec<i3
                     2 => {
                         memory[operand] = input1 * input2
                     }
-                    _ => {
-                        unreachable!()
+                    7 => {
+                        memory[operand] = if input1 < input2 { 1 } else { 0 }
                     }
+                    8 => {
+                        memory[operand] = if input1 == input2 { 1 } else { 0 }
+                    }
+                    _ => unreachable!()
                 }
                 pc += 4;
             }
+            // stdin
             3 => {
                 let operand = memory[pc + 1] as usize;
                 memory[operand] = stdin.pop().unwrap();
                 pc += 2;
             }
+            // stdout
             4 => {
                 let operand = memory[pc + 1] as usize;
                 stdout.push(memory[operand]);
                 pc += 2;
+            }
+            // jnz, jz
+            5 | 6 => {
+                let input1 = resolve_value(&memory, memory[pc + 1], parsed[1]);
+                let input2= resolve_value(&memory, memory[pc + 2], parsed[2]);
+                match parsed[0] {
+                    5 => {
+                        if input1 != 0 { pc = input2 as usize } else { pc += 3 }
+                    }
+                    6 => {
+                        if input1 == 0 { pc = input2 as usize } else { pc += 3 }
+                    }
+                    _ => unreachable!()
+                }
             }
             99 => {
                 break;
