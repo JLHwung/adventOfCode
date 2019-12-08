@@ -20,37 +20,66 @@ fn main() -> io::Result<()> {
     let mut stdout: Vec<i32> = Vec::new();
     let mut max_thruster_signal = std::i32::MIN;
 
-    for p1 in 0..5 {
-        for p2 in 0..5 {
+    for p1 in 5..10 {
+        for p2 in 5..10 {
             if p2 == p1 {
                 continue;
             }
-            for p3 in 0..5 {
+            for p3 in 5..10 {
                 if [p1, p2].iter().any(|p| *p == p3) {
                     continue;
                 }
-                for p4 in 0..5 {
+                for p4 in 5..10 {
                     if [p1, p2, p3].iter().any(|p| *p == p4) {
                         continue;
                     }
-                    for p5 in 0..5 {
+                    for p5 in 5..10 {
                         if [p1, p2, p3, p4].iter().any(|p| *p == p5) {
                             continue;
                         }
-                        let mut stdin = [0, p1].to_vec();
-                        let mut output = intcode_interpreter(&memory, &mut stdin, &mut stdout);
+                        let mut amp1_input = 0;
+                        let amp5_output: i32;
+                        let mut is_feedback = false;
+                        let mut memories = [memory.clone(), memory.clone(), memory.clone(), memory.clone(), memory.clone()];
+                        let mut pcs = [0,0,0,0,0];
+                        loop {
+                            let mut stdin = [amp1_input].to_vec();
+                            if !is_feedback {
+                                stdin.push(p1);
+                            }
+                            let mut output = intcode_interpreter(&mut memories[0], &mut stdin, &mut stdout, &mut pcs[0]).0;
 
-                        stdin = [output, p2].to_vec();
-                        output = intcode_interpreter(&memory, &mut stdin, &mut stdout);
-                        stdin = [output, p3].to_vec();
-                        output = intcode_interpreter(&memory, &mut stdin, &mut stdout);
-                        stdin = [output, p4].to_vec();
-                        output = intcode_interpreter(&memory, &mut stdin, &mut stdout);
-                        stdin = [output, p5].to_vec();
-                        output = intcode_interpreter(&memory, &mut stdin, &mut stdout);
+                            stdin = [output].to_vec();
+                            if !is_feedback {
+                                stdin.push(p2);
+                            }
+                            output = intcode_interpreter(&mut memories[1], &mut stdin, &mut stdout, &mut pcs[1]).0;
+                            stdin = [output].to_vec();
+                            if !is_feedback {
+                                stdin.push(p3);
+                            }
+                            output = intcode_interpreter(&mut memories[2], &mut stdin, &mut stdout, &mut pcs[2]).0;
+                            stdin = [output].to_vec();
+                            if !is_feedback {
+                                stdin.push(p4);
+                            }
+                            output = intcode_interpreter(&mut memories[3], &mut stdin, &mut stdout, &mut pcs[3]).0;
+                            stdin = [output].to_vec();
+                            if !is_feedback {
+                                stdin.push(p5);
+                            }
+                            let (output, finished) = intcode_interpreter(&mut memories[4], &mut stdin, &mut stdout, &mut pcs[4]);
+                            is_feedback = true;
+                            if finished == true {
+                                amp5_output = output;
+                                break;
+                            } else {
+                                amp1_input = output;
+                            }
+                        }
 
-                        if output > max_thruster_signal {
-                            max_thruster_signal = output;
+                        if amp5_output > max_thruster_signal {
+                            max_thruster_signal = amp5_output;
                         }
                     }
                 }
@@ -78,10 +107,8 @@ fn resolve_value(memory: &Vec<i32>, value: i32, mode: i32) -> i32 {
     }
 }
 
-fn intcode_interpreter(mem: &Vec<i32>, stdin: &mut Vec<i32>, stdout: &mut Vec<i32>) -> i32 {
-    let mut memory = mem.clone();
-
-    let mut pc: usize = 0;
+fn intcode_interpreter(memory: &mut Vec<i32>, stdin: &mut Vec<i32>, stdout: &mut Vec<i32>, entry: &mut usize) -> (i32, bool) {
+    let mut pc = *entry;
     loop {
         let parsed = parse_opcode(memory[pc]);
         match parsed[0] {
@@ -110,6 +137,9 @@ fn intcode_interpreter(mem: &Vec<i32>, stdin: &mut Vec<i32>, stdout: &mut Vec<i3
                 let operand = memory[pc + 1] as usize;
                 stdout.push(memory[operand]);
                 pc += 2;
+                // interrupt when output is emitted
+                *entry = pc;
+                return (*stdout.last().unwrap(), false)
             }
             // jnz, jz
             5 | 6 => {
@@ -142,5 +172,6 @@ fn intcode_interpreter(mem: &Vec<i32>, stdin: &mut Vec<i32>, stdout: &mut Vec<i3
         }
     }
 
-    *stdout.last().unwrap()
+    *entry = pc;
+    (*stdout.last().unwrap(), true)
 }
