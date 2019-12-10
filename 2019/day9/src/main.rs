@@ -19,7 +19,7 @@ fn main() -> io::Result<()> {
         })
         .collect();
 
-    let mut stdin = [1].to_vec();
+    let mut stdin = [2].to_vec();
     let mut stdout: Vec<i64> = Vec::new();
     let mut memory = Memory::new(tape);
 
