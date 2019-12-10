@@ -71,13 +71,8 @@ impl IndexMut<u64> for Memory {
     }
 }
 
-fn parse_opcode(opcode: i64) -> [i64; 4] {
-    [
-        opcode % 100,
-        opcode % 1000 / 100,
-        opcode % 10000 / 1000,
-        opcode / 10000,
-    ]
+fn parse_op(op: i64) -> [i64; 4] {
+    [op % 100, op % 1000 / 100, op % 10000 / 1000, op / 10000]
 }
 
 fn read_value(memory: &Memory, pos: i64, mode: i64, rb: i64) -> i64 {
@@ -102,33 +97,31 @@ fn intcode_interpreter(memory: &mut Memory, stdin: &mut Vec<i64>, stdout: &mut V
     // relative base starts at 0;
     let mut rb = 0;
     loop {
-        let parsed = parse_opcode(memory[pc]);
-        match parsed[0] {
+        let [opcode, mode1, mode2, mode3] = parse_op(memory[pc]);
+        match opcode {
             // add, mul
             1 | 2 | 7 | 8 => {
-                let input1 = read_value(memory, memory[pc + 1], parsed[1], rb);
-                let input2 = read_value(memory, memory[pc + 2], parsed[2], rb);
-                let output_pos = memory[pc + 3];
+                let input1 = read_value(memory, memory[pc + 1], mode1, rb);
+                let input2 = read_value(memory, memory[pc + 2], mode2, rb);
                 let result: i64;
-                match parsed[0] {
+                match opcode {
                     1 => result = input1 + input2,
                     2 => result = input1 * input2,
                     7 => result = if input1 < input2 { 1 } else { 0 },
                     8 => result = if input1 == input2 { 1 } else { 0 },
                     _ => unreachable!(),
                 }
-                write_value(memory, output_pos, parsed[3], rb, result);
+                write_value(memory, memory[pc + 3], mode3, rb, result);
                 pc += 4;
             }
             // stdin
             3 => {
-                let output_pos = memory[pc + 1];
-                write_value(memory, output_pos, parsed[1], rb, stdin.pop().unwrap());
+                write_value(memory, memory[pc + 1], mode1, rb, stdin.pop().unwrap());
                 pc += 2;
             }
             4 | 9 => {
-                let input1 = read_value(&memory, memory[pc + 1], parsed[1], rb);
-                match parsed[0] {
+                let input1 = read_value(&memory, memory[pc + 1], mode1, rb);
+                match opcode {
                     // stdout
                     4 => stdout.push(input1),
                     // adjust rb
@@ -139,9 +132,9 @@ fn intcode_interpreter(memory: &mut Memory, stdin: &mut Vec<i64>, stdout: &mut V
             }
             // jnz, jz
             5 | 6 => {
-                let input1 = read_value(&memory, memory[pc + 1], parsed[1], rb);
-                let input2 = read_value(&memory, memory[pc + 2], parsed[2], rb);
-                match parsed[0] {
+                let input1 = read_value(&memory, memory[pc + 1], mode1, rb);
+                let input2 = read_value(&memory, memory[pc + 2], mode2, rb);
+                match opcode {
                     5 => {
                         if input1 != 0 {
                             pc = input2 as u64
@@ -163,7 +156,7 @@ fn intcode_interpreter(memory: &mut Memory, stdin: &mut Vec<i64>, stdout: &mut V
                 break;
             }
             _ => {
-                panic!("ILLEGAL OPCODE: {}", parsed[0]);
+                panic!("ILLEGAL OPCODE: {}", opcode);
             }
         }
     }
