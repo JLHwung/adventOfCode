@@ -24,16 +24,17 @@ fn main() -> io::Result<()> {
     let mut tiles: HashMap<Pos, char> = HashMap::new();
     let initial_pos = (0isize, 0isize);
     let mut current_tile = initial_pos;
-    tiles.insert(initial_pos, '.');
+    tiles.insert(initial_pos, '#');
     let mut current_direction = 0;
     let mut pc = 0u64;
+    let mut rb = 0i64;
 
     loop {
         let current_tile_color = tiles.entry(current_tile).or_insert('.');
         let mut stdin = Vec::new();
         stdin.push(if *current_tile_color == '.' { 0 } else { 1 });
         let mut stdout: Vec<i64> = Vec::new();
-        let halted = intcode_interpreter(&mut memory, &mut stdin, &mut stdout, &mut pc);
+        let halted = intcode_interpreter(&mut memory, &mut stdin, &mut stdout, &mut pc, &mut rb);
         if halted == false {
             *current_tile_color = if stdout[0] == 0 { '.' } else { '#' };
             let direction_adjustment = stdout[1] as i32;
@@ -45,7 +46,27 @@ fn main() -> io::Result<()> {
         }
     }
 
-    println!("{}", tiles.len());
+    let x_max = tiles.keys().map(|x| x.0).max().unwrap();
+    let x_min = tiles.keys().map(|x| x.0).min().unwrap();
+    let y_max = tiles.keys().map(|x| x.1).max().unwrap();
+    let y_min = tiles.keys().map(|x| x.1).min().unwrap();
+
+    let mut y = y_max;
+    while y >= y_min {
+        for x in x_min..x_max + 1 {
+            match tiles.get(&(x, y)) {
+                Some(tile) => {
+                    print!("{}", tile);
+                }
+                None => {
+                    print!(" ");
+                }
+            }
+        }
+        y -= 1;
+        println!();
+    }
+
     Ok(())
 }
 
@@ -142,10 +163,11 @@ fn intcode_interpreter(
     stdin: &mut Vec<i64>,
     stdout: &mut Vec<i64>,
     entry: &mut u64,
+    rb_entry: &mut i64,
 ) -> bool {
     let mut pc = *entry;
     // relative base starts at 0;
-    let mut rb = 0;
+    let mut rb = *rb_entry;
     loop {
         let [opcode, mode1, mode2, mode3] = parse_op(memory[pc]);
         match opcode {
@@ -179,6 +201,7 @@ fn intcode_interpreter(
                         if stdout.len() == 2 {
                             pc += 2;
                             *entry = pc;
+                            *rb_entry = rb;
                             return false;
                         }
                     }
@@ -219,5 +242,6 @@ fn intcode_interpreter(
         }
     }
     *entry = pc;
+    *rb_entry = rb;
     return true;
 }
