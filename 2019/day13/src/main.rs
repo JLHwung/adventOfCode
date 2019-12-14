@@ -1,22 +1,22 @@
 use std::collections::HashMap;
 use std::fs::File;
-use std::io::{self, prelude::*, BufReader};
+use std::io::{self, prelude::*};
 use std::ops::{Index, IndexMut};
 use std::str;
 
 fn main() -> io::Result<()> {
-    let file = File::open("./data/input.txt")?;
-    let reader = BufReader::new(file);
+    let mut file = File::open("./data/input.txt")?;
+    let mut content = String::new();
+    file.read_to_string(&mut content).unwrap();
+    // hack
+    content = content.replace(
+        "1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1",
+        "1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,3,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1",
+    );
 
-    let tape: Vec<i64> = reader
-        .split(b',')
-        .map(|x| {
-            str::from_utf8(&(x.unwrap()))
-                .unwrap()
-                .trim_end()
-                .parse()
-                .unwrap()
-        })
+    let mut tape: Vec<i64> = content
+        .split(',')
+        .map(|x| x.to_string().trim_end().parse().unwrap())
         .collect();
 
     let mut memory = Memory::new(tape);
@@ -24,11 +24,18 @@ fn main() -> io::Result<()> {
     let mut stdout = Vec::new();
     let mut entry = 0;
     let mut rb_entry = 0;
-    intcode_interpreter(&mut memory, &mut stdin, &mut stdout, &mut entry, &mut rb_entry);
+    // play for free :D
+    memory[0] = 2;
+    let result = intcode_interpreter(
+        &mut memory,
+        &mut stdin,
+        &mut stdout,
+        &mut entry,
+        &mut rb_entry,
+    );
 
-    let mut tiles = HashMap::new();
     let mut cursor = 0;
-
+    let mut tiles = HashMap::new();
     while cursor < stdout.len() {
         let [x, y, tile_id] = [stdout[cursor], stdout[cursor + 1], stdout[cursor + 2]];
         let mut inserted = tiles.entry((x, y)).or_insert(0);
@@ -36,11 +43,45 @@ fn main() -> io::Result<()> {
         cursor += 3;
     }
 
-    println!("# of block tiles: {}", tiles.values().filter(|x| **x == 2).count());
+    let x_max = tiles.keys().map(|x| x.0).max().unwrap();
+    let x_min = tiles.keys().map(|x| x.0).min().unwrap();
+    let y_max = tiles.keys().map(|x| x.1).max().unwrap();
+    let y_min = tiles.keys().map(|x| x.1).min().unwrap();
+
+    let mut y = y_max;
+    while y >= y_min {
+        for x in x_min..x_max + 1 {
+            if x == -1 {
+                match tiles.get(&(x, y)) {
+                    Some(tile) => {
+                        print!("{}", tile);
+                    }
+                    None => {
+                        print!(" ");
+                    }
+                }
+                continue;
+            }
+            match tiles.get(&(x, y)) {
+                Some(tile) => match tile {
+                    0 => print!(" "),
+                    1 => print!("W"),
+                    2 => print!("B"),
+                    3 => print!("-"),
+                    4 => print!("O"),
+                    _ => unreachable!(),
+                },
+                None => {
+                    print!(" ");
+                }
+            }
+        }
+        y -= 1;
+        println!();
+    }
 
     Ok(())
 }
-
 
 struct Memory {
     program: Vec<i64>,
@@ -111,7 +152,9 @@ fn intcode_interpreter(
     let mut pc = *entry;
     // relative base starts at 0;
     let mut rb = *rb_entry;
+    let mut time = 0;
     loop {
+        time += 1;
         let [opcode, mode1, mode2, mode3] = parse_op(memory[pc]);
         match opcode {
             // add, mul
@@ -131,7 +174,8 @@ fn intcode_interpreter(
             }
             // stdin
             3 => {
-                write_value(memory, memory[pc + 1], mode1, rb, stdin.pop().unwrap());
+                // leave joystick at 0
+                write_value(memory, memory[pc + 1], mode1, rb, 0);
                 pc += 2;
             }
             4 | 9 => {
@@ -175,6 +219,10 @@ fn intcode_interpreter(
             _ => {
                 panic!("ILLEGAL OPCODE: {}", opcode);
             }
+        }
+        // The game does not halt, we manually break when time elapses for a long time
+        if time > 1000000 {
+            break;
         }
     }
     *entry = pc;
