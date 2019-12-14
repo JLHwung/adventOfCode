@@ -1,21 +1,21 @@
-type Pos = (i32, i32, i32);
+type Pos = [i32; 3];
 
-fn main() {
-    let m1pos: Pos = (-6i32, -5i32, -8i32);
-    let m2pos: Pos = (0i32, -3i32, -13i32);
-    let m3pos: Pos = (-15i32, 10i32, -11i32);
-    let m4pos: Pos = (-3i32, -8i32, 3i32);
+fn simulate_until_reset(dimension: usize) -> u64 {
+    let m1pos: Pos = [-6i32, -5i32, -8i32];
+    let m2pos: Pos = [0i32, -3i32, -13i32];
+    let m3pos: Pos = [-15i32, 10i32, -11i32];
+    let m4pos: Pos = [-3i32, -8i32, 3i32];
 
     let mut pos: [Pos; 4] = [m1pos, m2pos, m3pos, m4pos];
 
-    let mut velocity = [
-        (0i32, 0i32, 0i32),
-        (0i32, 0i32, 0i32),
-        (0i32, 0i32, 0i32),
-        (0i32, 0i32, 0i32),
+    let mut velocity: [Pos; 4] = [
+        [0i32, 0i32, 0i32],
+        [0i32, 0i32, 0i32],
+        [0i32, 0i32, 0i32],
+        [0i32, 0i32, 0i32],
     ];
 
-    let mut step = 0;
+    let mut step: u64 = 0;
 
     loop {
         // apply gravity
@@ -25,38 +25,51 @@ fn main() {
                 if j == i {
                     continue;
                 }
-                v.0 += sign(pos[i].0, pos[j].0);
-                v.1 += sign(pos[i].1, pos[j].1);
-                v.2 += sign(pos[i].2, pos[j].2);
+                v[dimension] += sign(pos[i][dimension], pos[j][dimension]);
             }
             velocity[i] = v;
         }
 
+        step += 1;
+
         // apply velocity
         for i in 0..4 {
-            pos[i].0 += velocity[i].0;
-            pos[i].1 += velocity[i].1;
-            pos[i].2 += velocity[i].2;
+            pos[i][dimension] += velocity[i][dimension];
         }
 
         step += 1;
 
-        if step == 1000 {
+        let kin_dimension: i32 = velocity.iter().map(|x| x[dimension].abs()).sum();
+        if kin_dimension == 0 {
+            println!(
+                "State of dimension {} is reset after step: {}",
+                dimension, step
+            );
             break;
         }
     }
 
-    let mut energy = 0i32;
-
-    for i in 0..4 {
-        energy += sum_abs(pos[i]) * sum_abs(velocity[i]);
-    }
-
-    println!("Total Energy: {}", energy);
+    step
 }
 
-fn sum_abs(pos: Pos) -> i32 {
-    pos.0.abs() + pos.1.abs() + pos.2.abs()
+fn main() {
+    let total_steps = [0, 1, 2]
+        .iter()
+        .map(|d| simulate_until_reset(*d))
+        .fold(1, |acc, x| lcm(acc, x));
+    println!("State is reset after step: {}", total_steps);
+}
+
+fn gcd(m: u64, n: u64) -> u64 {
+    if m == 0 {
+        n
+    } else {
+        gcd(n % m, m)
+    }
+}
+
+fn lcm(m: u64, n: u64) -> u64 {
+    m * n / gcd(m, n)
 }
 
 fn sign(_self: i32, other: i32) -> i32 {
