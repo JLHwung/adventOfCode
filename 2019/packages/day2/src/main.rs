@@ -1,19 +1,22 @@
 use std::fs::File;
 use std::io::{self, prelude::*, BufReader};
-use std::vec;
 use std::str;
+use std::vec;
 
 fn main() -> io::Result<()> {
     let file = File::open("./packages/day2/data/input.txt")?;
     let reader = BufReader::new(file);
 
-    let values: vec::Vec<u32> = reader.split(b',').map(|x| {
-        str::from_utf8(&(
-            x.unwrap())
-        ).unwrap()
-            .trim_end()
-            .parse().unwrap()
-    }).collect();
+    let values: vec::Vec<u32> = reader
+        .split(b',')
+        .map(|x| {
+            str::from_utf8(&(x.unwrap()))
+                .unwrap()
+                .trim_end()
+                .parse()
+                .unwrap()
+        })
+        .collect();
 
     for noun in 0..99 {
         for verb in 0..99 {

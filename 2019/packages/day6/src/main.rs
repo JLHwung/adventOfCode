@@ -1,7 +1,7 @@
+use std::cmp;
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::{self, prelude::*, BufReader};
-use std::cmp;
 
 fn main() -> io::Result<()> {
     let file = File::open("./packages/day6/data/input.txt")?;
@@ -20,7 +20,11 @@ fn main() -> io::Result<()> {
     let mut san_ancestors = find_ancestors(&map, &"SAN".to_string());
     san_ancestors.reverse();
 
-    println!("{}", you_ancestors.len() + san_ancestors.len() - 2 * find_common_starts(&you_ancestors, &san_ancestors));
+    println!(
+        "{}",
+        you_ancestors.len() + san_ancestors.len()
+            - 2 * find_common_starts(&you_ancestors, &san_ancestors)
+    );
     Ok(())
 }
 
@@ -47,9 +51,8 @@ fn find_common_starts(ancestor1: &Vec<String>, ancestor2: &Vec<String>) -> usize
         if ancestor1[i] == ancestor2[i] {
             r += 1;
         } else {
-            break
+            break;
         }
     }
     r
 }
-

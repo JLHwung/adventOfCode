@@ -1,7 +1,7 @@
 use std::collections::HashMap;
-use std::ops::{Index, IndexMut};
 use std::fs::File;
 use std::io::{self, prelude::*, Result};
+use std::ops::{Index, IndexMut};
 
 type Program = Vec<i64>;
 

@@ -52,8 +52,10 @@ fn find_intersection_lowest_delay(wire1: &Vec<Segment>, wire2: &Vec<Segment>) ->
                         || cmp::min(s1[0][1], s1[1][1]) > s2[0][1]
                     {
                     } else {
-                        let cost =
-                            s1_cost + s2_cost + (s1[0][1] - s2[0][1]).abs() + (s2[0][0] - s1[0][0]).abs();
+                        let cost = s1_cost
+                            + s2_cost
+                            + (s1[0][1] - s2[0][1]).abs()
+                            + (s2[0][0] - s1[0][0]).abs();
                         if cost < min_cost && cost != 0 {
                             min_cost = cost;
                         }
@@ -81,8 +83,10 @@ fn find_intersection_lowest_delay(wire1: &Vec<Segment>, wire2: &Vec<Segment>) ->
                         || cmp::min(s2[0][1], s2[1][1]) > s1[0][1]
                     {
                     } else {
-                        let cost =
-                            s1_cost + s2_cost + (s1[0][1] - s2[0][1]).abs() + (s2[0][0] - s1[0][0]).abs();
+                        let cost = s1_cost
+                            + s2_cost
+                            + (s1[0][1] - s2[0][1]).abs()
+                            + (s2[0][0] - s1[0][0]).abs();
                         if cost < min_cost && cost != 0 {
                             min_cost = cost;
                         }
