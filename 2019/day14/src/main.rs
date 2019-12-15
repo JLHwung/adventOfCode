@@ -127,12 +127,29 @@ fn main() -> io::Result<()> {
 
     let product_map = generate_derivatives(&recipes);
 
-    let mut requests = HashMap::new();
+    let ore_capacity: usize = 1000000000000;
 
-    requests.insert("FUEL", 1usize);
+    let mut fuel_target_min = ore_capacity / 1046814;
+    let mut fuel_target_max = fuel_target_min * 3;
 
-    satisfy(&recipes, &product_map, &mut requests);
+    while fuel_target_max - fuel_target_min >= 2 {
+        let fuel_target = (fuel_target_min + fuel_target_max) / 2;
 
-    println!("{}", requests.get("ORE").unwrap());
+        let mut requests = HashMap::new();
+
+        requests.insert("FUEL", fuel_target);
+
+        satisfy(&recipes, &product_map, &mut requests);
+
+        let ore_consumed = requests.get("ORE").unwrap();
+
+        if *ore_consumed < ore_capacity {
+            fuel_target_min = fuel_target
+        } else {
+            fuel_target_max = fuel_target
+        }
+    }
+
+    println!("{}", (fuel_target_min + fuel_target_max) / 2);
     Ok(())
 }
