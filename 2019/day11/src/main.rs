@@ -1,25 +1,10 @@
 use day11::intcode;
 use std::collections::HashMap;
-use std::fs::File;
-use std::io::{self, prelude::*, BufReader};
-use std::str;
+use std::io::Result;
 
-fn main() -> io::Result<()> {
-    let file = File::open("./data/input.txt")?;
-    let reader = BufReader::new(file);
-
-    let tape: Vec<i64> = reader
-        .split(b',')
-        .map(|x| {
-            str::from_utf8(&(x.unwrap()))
-                .unwrap()
-                .trim_end()
-                .parse()
-                .unwrap()
-        })
-        .collect();
-
-    let mut memory = intcode::Memory::new(tape);
+fn main() -> Result<()> {
+    let program = intcode::read_file_as_program("./data/input.txt")?;
+    let mut memory = intcode::Memory::new(program);
 
     let mut tiles: HashMap<Pos, char> = HashMap::new();
     let initial_pos = (0isize, 0isize);

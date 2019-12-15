@@ -1,5 +1,9 @@
 use std::collections::HashMap;
 use std::ops::{Index, IndexMut};
+use std::fs::File;
+use std::io::{self, prelude::*, Result};
+
+type Program = Vec<i64>;
 
 pub struct Memory {
     program: Vec<i64>,
@@ -146,4 +150,18 @@ pub fn interpreter(
     *entry = pc;
     *rb_entry = rb;
     return true;
+}
+
+pub fn read_file_as_program(path: &str) -> io::Result<Program> {
+    let mut file = File::open(path)?;
+    let mut content = String::new();
+    file.read_to_string(&mut content);
+
+    let tape: Vec<i64> = content
+        .trim_end()
+        .split(',')
+        .map(|x| x.to_string().trim_end().parse().unwrap())
+        .collect();
+
+    Ok(tape)
 }
