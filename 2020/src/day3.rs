@@ -2,14 +2,14 @@ use std::fs;
 use std::io;
 
 fn main() -> io::Result<()> {
-    let raw = fs::read_to_string(fs::canonicalize("./data/day3.txt")?)?;
-    let input = process(&raw);
+    let input = process();
     println!("Answer of p1: {}", p1(&input));
     println!("Answer of p2: {}", p2(&input));
     Ok(())
 }
 
-fn process(raw: &str) -> Vec<Vec<u8>> {
+fn process() -> Vec<Vec<u8>> {
+    let raw = fs::read_to_string(fs::canonicalize("./data/day3.txt").unwrap()).unwrap();
     let mut result: Vec<Vec<u8>> = vec![];
     for line in raw.split("\n") {
         if line.is_empty() {
@@ -28,10 +28,6 @@ fn process(raw: &str) -> Vec<Vec<u8>> {
     result
 }
 
-fn p1(input: &Vec<Vec<u8>>) -> usize {
-    traverse_trees(input, 3, 1)
-}
-
 fn traverse_trees(input: &Vec<Vec<u8>>, right: usize, down: usize) -> usize {
     let mut result: usize = 0;
     let width = input[0].len();
@@ -44,6 +40,10 @@ fn traverse_trees(input: &Vec<Vec<u8>>, right: usize, down: usize) -> usize {
         j += right;
     }
     result
+}
+
+fn p1(input: &Vec<Vec<u8>>) -> usize {
+    traverse_trees(input, 3, 1)
 }
 
 fn p2(input: &Vec<Vec<u8>>) -> usize {
