@@ -94,7 +94,10 @@ pub fn interpreter(
             }
             // stdin
             3 => {
-                write_value(memory, memory[pc + 1], mode1, rb, stdin.pop().unwrap());
+                println!("pc: {}, rb: {}, std: {}", pc, rb, stdin.len());
+                if stdin.len() > 0 {
+                    write_value(memory, memory[pc + 1], mode1, rb, stdin.pop().unwrap());
+                }
                 pc += 2;
             }
             4 | 9 => {

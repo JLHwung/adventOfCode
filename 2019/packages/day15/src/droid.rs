@@ -1,6 +1,5 @@
 use crate::intcode;
 use std::collections::HashMap;
-use std::ops::Deref;
 
 type Metric = i32;
 type Pos = (Metric, Metric);
@@ -43,7 +42,7 @@ impl Droid {
     }
 
     pub fn explore(&mut self) {
-        self.backtrack([(0, 0)].to_vec());
+        self.update_environment(NORTH, &(0, 0));
     }
 
     pub fn distance(&self) -> usize {
@@ -94,7 +93,7 @@ impl Droid {
                 new_solution[solution.len() - 1] = new_pos;
                 Some(new_solution)
             }
-            None => None
+            None => None,
         }
     }
 
@@ -118,9 +117,10 @@ impl Droid {
     }
 
     fn update_environment(&mut self, direction: Direction, current_pos: &Pos) -> Pos {
-    let new_pos_type = self.call_sensor(direction);
-    let new_pos = next_tile(current_pos, direction);
-    self.environment.entry(new_pos).or_insert(new_pos_type);
+        let new_pos_type = self.call_sensor(direction);
+        let new_pos = next_tile(current_pos, direction);
+        println!("{}, {}", new_pos.0, new_pos.1);
+        self.environment.entry(new_pos).or_insert(new_pos_type);
         new_pos
     }
 
