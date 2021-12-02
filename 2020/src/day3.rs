@@ -47,7 +47,7 @@ fn p1(input: &Vec<Vec<u8>>) -> usize {
 }
 
 fn p2(input: &Vec<Vec<u8>>) -> usize {
-    let data: Vec<(usize, usize)> = vec![(1, 1), (3, 1), (5, 1), (7, 1), (1, 2)];
+    let data = [(1, 1), (3, 1), (5, 1), (7, 1), (1, 2)];
     data.iter()
         .map(|(right, down)| traverse_trees(input, *right, *down))
         .fold(1, |acc, x| acc * x)
