@@ -110,7 +110,7 @@ fn p2(input: &Vec<&str>) -> usize {
         .filter(|line| {
             // allValid: 0x7f
             let mut valid_flag: u8 = 0x00;
-            for item in line.split(" ") {
+            for item in line.split_whitespace() {
                 let mut colon_iter = item.split(":");
                 let key = colon_iter.next().unwrap();
                 let value = colon_iter.next().unwrap();
@@ -176,9 +176,6 @@ fn p2(input: &Vec<&str>) -> usize {
                     _ => unimplemented!(),
                 }
             }
-            // if valid_flag == 0x7f {
-            //     println!("{}\n", line);
-            // }
             return valid_flag == 0x7f;
         })
         .count()
