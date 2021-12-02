@@ -26,9 +26,24 @@ fn p1(input: &Vec<&str>) -> usize {
     input
         .iter()
         .filter(|line| {
-            ["byr:", "iyr:", "eyr:", "hgt:", "hcl:", "ecl:", "pid:"]
-                .iter()
-                .all(|&key| line.contains(key))
+            // allValid: 0x7f
+            let mut valid_flag: u8 = 0x00;
+            for item in line.split_whitespace() {
+                let mut colon_iter = item.split(":");
+                let key = colon_iter.next().unwrap();
+                match key {
+                    "byr" => valid_flag |= 0x1,
+                    "iyr" => valid_flag |= 0x2,
+                    "eyr" => valid_flag |= 0x4,
+                    "hgt" => valid_flag |= 0x8,
+                    "hcl" => valid_flag |= 0x10,
+                    "ecl" => valid_flag |= 0x20,
+                    "pid" => valid_flag |= 0x40,
+                    "cid" => {}
+                    _ => unimplemented!(),
+                }
+            }
+            return valid_flag == 0x7f;
         })
         .count()
 }
