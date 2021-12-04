@@ -5,8 +5,10 @@ use std::io;
 
 fn main() -> io::Result<()> {
     let raw = fs::read_to_string(fs::canonicalize("./data/day4.txt")?)?;
-    println!("Answer of p1: {}", p1(&raw));
-    println!("Answer of p2: {}", p2(&raw));
+    let state = new_state();
+    let input = process(&raw, &state);
+    println!("Answer of p1: {}", p1(&input, &state));
+    println!("Answer of p2: {}", p2(&input, &state));
     Ok(())
 }
 
@@ -60,31 +62,37 @@ fn new_state() -> State {
     state
 }
 
+fn reset_state(state: &State) {
+    for i in 0..MOVE_MAX {
+        state[i].1.set(false);
+    }
+}
+
 fn has_win(board: &Board) -> bool {
     // check columns
     for i in 0..WIDTH {
-        let mut winned = true;
+        let mut won = true;
         for j in 0..HEIGHT {
-            winned = winned && board[j * WIDTH + i].1.get();
-            if winned == false {
+            won = won && board[j * WIDTH + i].1.get();
+            if won == false {
                 break;
             }
         }
-        if winned {
+        if won {
             return true;
         }
     }
 
     // check rows
     for j in 0..HEIGHT {
-        let mut winned = true;
+        let mut won = true;
         for i in 0..WIDTH {
-            winned = winned && board[j * WIDTH + i].1.get();
-            if winned == false {
+            won = won && board[j * WIDTH + i].1.get();
+            if won == false {
                 break;
             }
         }
-        if winned {
+        if won {
             return true;
         }
     }
@@ -98,12 +106,10 @@ fn sum_unmarked(board: &Board) -> usize {
         .filter_map(|x| if !x.1.get() { Some(x.0) } else { None })
         .fold(0, |acc, x| acc + x)
 }
-fn p1(raw: &str) -> usize {
-    let state = new_state();
-    let input = process(&raw, &state);
+fn p1(input: &Game, state: &State) -> usize {
     let boards = &input.boards;
-    for op in input.moves {
-        state[op].1.set(true);
+    for op in &input.moves {
+        state[*op].1.set(true);
         for board in boards {
             if has_win(board) {
                 return sum_unmarked(board) * op;
@@ -113,20 +119,19 @@ fn p1(raw: &str) -> usize {
     0
 }
 
-fn p2(raw: &str) -> usize {
-    let state = new_state();
-    let input = process(&raw, &state);
+fn p2(input: &Game, state: &State) -> usize {
+    reset_state(state);
     let boards = &input.boards;
-    let mut winned = HashSet::<usize>::new();
-    let mut last_winned_score: usize = 0;
-    for op in input.moves {
-        state[op].1.set(true);
+    let mut won = HashSet::<usize>::new();
+    let mut last_won_score: usize = 0;
+    for op in &input.moves {
+        state[*op].1.set(true);
         for (i, board) in boards.iter().enumerate() {
-            if !winned.contains(&i) && has_win(board) {
-                last_winned_score = sum_unmarked(board) * op;
-                winned.insert(i);
+            if !won.contains(&i) && has_win(board) {
+                last_won_score = sum_unmarked(board) * op;
+                won.insert(i);
             }
         }
     }
-    last_winned_score
+    last_won_score
 }
