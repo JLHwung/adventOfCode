@@ -116,7 +116,7 @@ fn p1(input: &Game, state: &State) -> usize {
             }
         }
     }
-    0
+    unreachable!();
 }
 
 fn p2(input: &Game, state: &State) -> usize {
