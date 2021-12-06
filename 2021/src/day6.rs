@@ -1,6 +1,5 @@
 use std::fs;
 use std::io;
-use std::thread;
 
 fn main() -> io::Result<()> {
     let raw = fs::read_to_string(fs::canonicalize("./data/day6.txt")?)?;
@@ -22,31 +21,34 @@ fn process(raw: &str) -> Vec<usize> {
     result
 }
 
-fn count_fish(timer: isize, days: isize) -> usize {
-    if days <= timer {
-        1
+fn count_fish(x: &[usize; 9], days: isize) -> [usize; 9] {
+    if days == 0 {
+        *x
     } else {
-        count_fish(6, days - timer - 1) + count_fish(8, days - timer - 1)
+        count_fish(
+            &[x[1], x[2], x[3], x[4], x[5], x[6], x[7] + x[0], x[8], x[0]],
+            days - 1,
+        )
     }
 }
 
 fn sum_fish_count(input: &Vec<usize>, days: isize) -> usize {
-    let cache = {
-        let mut handlers = vec![];
-        for i in 0..6 {
-            handlers.push(thread::spawn(move || {
-                count_fish(i.try_into().unwrap(), days)
-            }))
-        }
-        let mut cache = vec![];
-        for handler in handlers {
-            cache.push(handler.join().unwrap());
-        }
-        cache
-    };
-    let mut sum = 0;
+    let mut frequency = [0; 9];
     for i in input {
-        sum += cache[*i];
+        match i {
+            0 => frequency[0] += 1,
+            1 => frequency[1] += 1,
+            2 => frequency[2] += 1,
+            3 => frequency[3] += 1,
+            4 => frequency[4] += 1,
+            5 => frequency[5] += 1,
+            6 => frequency[6] += 1,
+            _ => unreachable!(),
+        }
+    }
+    let mut sum = 0;
+    for v in count_fish(&frequency, days) {
+        sum += v;
     }
     sum
 }
