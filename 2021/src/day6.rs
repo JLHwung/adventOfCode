@@ -9,16 +9,21 @@ fn main() -> io::Result<()> {
     Ok(())
 }
 
-fn process(raw: &str) -> Vec<usize> {
-    let mut result: Vec<_> = vec![];
-    for n in raw.split(",") {
-        if n.is_empty() {
-            continue;
+fn process(raw: &str) -> [usize; 9] {
+    let mut frequency = [0; 9];
+    for i in raw.chars() {
+        match i {
+            '0' => frequency[0] += 1,
+            '1' => frequency[1] += 1,
+            '2' => frequency[2] += 1,
+            '3' => frequency[3] += 1,
+            '4' => frequency[4] += 1,
+            '5' => frequency[5] += 1,
+            '6' => frequency[6] += 1,
+            _ => {}
         }
-        let timer = n.parse().unwrap();
-        result.push(timer)
     }
-    result
+    frequency
 }
 
 fn count_fish(x: &[usize; 9], days: isize) -> [usize; 9] {
@@ -32,31 +37,18 @@ fn count_fish(x: &[usize; 9], days: isize) -> [usize; 9] {
     }
 }
 
-fn sum_fish_count(input: &Vec<usize>, days: isize) -> usize {
-    let mut frequency = [0; 9];
-    for i in input {
-        match i {
-            0 => frequency[0] += 1,
-            1 => frequency[1] += 1,
-            2 => frequency[2] += 1,
-            3 => frequency[3] += 1,
-            4 => frequency[4] += 1,
-            5 => frequency[5] += 1,
-            6 => frequency[6] += 1,
-            _ => unreachable!(),
-        }
-    }
+fn sum_fish_count(input: &[usize; 9], days: isize) -> usize {
     let mut sum = 0;
-    for v in count_fish(&frequency, days) {
+    for v in count_fish(&input, days) {
         sum += v;
     }
     sum
 }
 
-fn p1(input: &Vec<usize>) -> usize {
+fn p1(input: &[usize; 9]) -> usize {
     sum_fish_count(input, 80)
 }
 
-fn p2(input: &Vec<usize>) -> usize {
+fn p2(input: &[usize; 9]) -> usize {
     sum_fish_count(input, 256)
 }
