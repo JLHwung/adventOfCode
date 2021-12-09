@@ -94,7 +94,7 @@ fn decode_output(input: &Vec<&str>, transform: &Transform) -> usize {
 }
 
 /// Compute the inverse transform from given signals
-/// 
+///
 /// The inverse transform will map signals to a one-bit mask, see definition of Transform
 fn compute_inverse_transform(signals: &Vec<&str>) -> Transform {
     let signal_bits: Vec<_> = signals
@@ -211,15 +211,20 @@ mod test {
 
     #[test]
     fn test_compute_inverse_transform() {
-        let signals: Vec<_> = "acedgfb cdfbe gcdfa fbcad dab cefabd cdfgeb eafb cagedb ab".split(" ").collect();
-        assert_eq!(compute_inverse_transform(&signals)[..], vec![
-            0x4, // 'a' => 'c'
-            0x20, // 'b' => 'f'
-            0x40, // 'c' => 'g'
-            0x1, // 'd' => 'a'
-            0x2, // 'e' => 'b'
-            0x8, // 'f' => 'd'
-            0x10, // 'g' => 'e'
-        ][..])
+        let signals: Vec<_> = "acedgfb cdfbe gcdfa fbcad dab cefabd cdfgeb eafb cagedb ab"
+            .split(" ")
+            .collect();
+        assert_eq!(
+            compute_inverse_transform(&signals)[..],
+            vec![
+                0x4,  // 'a' => 'c'
+                0x20, // 'b' => 'f'
+                0x40, // 'c' => 'g'
+                0x1,  // 'd' => 'a'
+                0x2,  // 'e' => 'b'
+                0x8,  // 'f' => 'd'
+                0x10, // 'g' => 'e'
+            ][..]
+        )
     }
 }

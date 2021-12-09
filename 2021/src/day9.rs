@@ -1,5 +1,5 @@
 use std::cmp::Reverse;
-use std::collections::{BinaryHeap, HashSet, VecDeque};
+use std::collections::{BinaryHeap, HashSet};
 use std::fs;
 use std::io;
 
@@ -81,17 +81,17 @@ fn traverse_basin(
     height: usize,
 ) -> usize {
     let mut size = 0;
-    let mut queue: VecDeque<Location> = VecDeque::new();
+    let mut stack: Vec<_> = vec![];
     if should_visit(input, basin_set, y, x) {
         size += 1;
-        queue.push_back((y, x));
+        stack.push((y, x));
         basin_set.insert((y, x));
-        while let Some((y, x)) = queue.pop_front() {
+        while let Some((y, x)) = stack.pop() {
             let neighbors = get_neighbors(y, x, width, height);
             for (y, x) in neighbors {
                 if should_visit(input, basin_set, y, x) {
                     size += 1;
-                    queue.push_back((y, x));
+                    stack.push((y, x));
                     basin_set.insert((y, x));
                 }
             }
