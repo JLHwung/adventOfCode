@@ -37,13 +37,11 @@ impl FromStr for Line {
             end_iter.next().unwrap().parse::<usize>()?,
         );
         // invariant: start.0 <= end.0 || start.1 <= end.1
-        let mut temp = start;
+        let temp = start;
         if start.0 > end.0 {
-            temp = start;
             start = end;
             end = temp;
         } else if start.1 > end.1 {
-            temp = start;
             start = end;
             end = temp;
         }
@@ -66,6 +64,7 @@ fn process(raw: &str) -> Vec<Line> {
     result
 }
 
+#[allow(dead_code)]
 fn print_map(map: &Vec<i32>) {
     for i in 0..HEIGHT {
         let mut str = "".to_string();

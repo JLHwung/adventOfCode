@@ -200,6 +200,7 @@ fn p2(input: &Input) -> usize {
     result
 }
 
+#[cfg(test)]
 mod test {
     use super::*;
     #[test]
