@@ -81,19 +81,14 @@ fn traverse_basin(
     height: usize,
 ) -> usize {
     let mut size = 0;
-    let mut stack: Vec<_> = vec![];
-    if should_visit(input, basin_set, y, x) {
-        size += 1;
-        stack.push((y, x));
-        basin_set.insert((y, x));
-        while let Some((y, x)) = stack.pop() {
+    let mut stack: Vec<_> = vec![(y, x)];
+    while let Some((y, x)) = stack.pop() {
+        if should_visit(input, basin_set, y, x) {
+            size += 1;
+            basin_set.insert((y, x));
             let neighbors = get_neighbors(y, x, width, height);
             for (y, x) in neighbors {
-                if should_visit(input, basin_set, y, x) {
-                    size += 1;
-                    stack.push((y, x));
-                    basin_set.insert((y, x));
-                }
+                stack.push((y, x));
             }
         }
     }
@@ -103,13 +98,10 @@ fn traverse_basin(
 fn p2(input: &Input) -> usize {
     let width = input[0].len();
     let height = input.len();
-    let mut basin_set = HashSet::<Location>::new();
+    let mut basin_set = HashSet::<Location>::with_capacity(width * height);
     let mut basin_size_heap = BinaryHeap::<Reverse<usize>>::with_capacity(BASIN_SIZE_TOP_K + 1);
     for y in 0..height {
         for x in 0..width {
-            if basin_set.contains(&(y, x)) {
-                continue;
-            }
             let basin_size = traverse_basin(input, &mut basin_set, y, x, width, height);
             // Store basin size to a min-max heap so that we can keep references to the top-3 largest basin
             if basin_size > 0 {
