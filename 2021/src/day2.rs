@@ -30,7 +30,7 @@ impl FromStr for Move {
     type Err = ParseMoveError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let mut iter = s.split(" ");
+        let mut iter = s.split(' ');
         let op = iter.next().unwrap();
         let val = iter
             .next()
@@ -51,7 +51,7 @@ impl FromStr for Move {
 
 fn process(raw: &str) -> Vec<Move> {
     let mut result: Vec<Move> = vec![];
-    for n in raw.split("\n") {
+    for n in raw.split('\n') {
         if n.is_empty() {
             continue;
         }
@@ -61,7 +61,7 @@ fn process(raw: &str) -> Vec<Move> {
     result
 }
 
-fn p1(input: &Vec<Move>) -> i32 {
+fn p1(input: &[Move]) -> i32 {
     let mut hoz = 0;
     let mut depth = 0;
     for mov in input {
@@ -75,7 +75,7 @@ fn p1(input: &Vec<Move>) -> i32 {
     hoz * depth
 }
 
-fn p2(input: &Vec<Move>) -> i32 {
+fn p2(input: &[Move]) -> i32 {
     let mut hoz = 0;
     let mut depth = 0;
     let mut aim = 0;
@@ -91,4 +91,25 @@ fn p2(input: &Vec<Move>) -> i32 {
         }
     }
     hoz * depth
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_p1() -> io::Result<()> {
+        let raw = fs::read_to_string(fs::canonicalize("./data/day2.txt")?)?;
+        let input = process(&raw);
+        assert_eq!(p1(&input), 1690020);
+        Ok(())
+    }
+
+    #[test]
+    fn test_p2() -> io::Result<()> {
+        let raw = fs::read_to_string(fs::canonicalize("./data/day2.txt")?)?;
+        let input = process(&raw);
+        assert_eq!(p2(&input), 1408487760);
+        Ok(())
+    }
 }

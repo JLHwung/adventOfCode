@@ -11,7 +11,7 @@ fn main() -> io::Result<()> {
 fn process() -> Vec<Vec<u8>> {
     let raw = fs::read_to_string(fs::canonicalize("./data/day3.txt").unwrap()).unwrap();
     let mut result: Vec<Vec<u8>> = vec![];
-    for line in raw.split("\n") {
+    for line in raw.split('\n') {
         if line.is_empty() {
             continue;
         }

@@ -38,7 +38,7 @@ fn main() -> io::Result<()> {
 
 fn process(raw: &str) -> Vec<(Policy, &str)> {
     let mut result: Vec<(Policy, &str)> = vec![];
-    for line in raw.split("\n") {
+    for line in raw.split('\n') {
         if line.is_empty() {
             continue;
         }

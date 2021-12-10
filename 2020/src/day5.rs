@@ -11,7 +11,7 @@ fn main() -> io::Result<()> {
 
 fn process(raw: &str) -> Vec<usize> {
     let mut result: Vec<_> = vec![];
-    for line in raw.split("\n") {
+    for line in raw.split('\n') {
         if line.is_empty() {
             continue;
         }

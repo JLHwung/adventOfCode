@@ -11,7 +11,7 @@ fn main() -> io::Result<()> {
     Ok(())
 }
 
-type Input = Vec<Vec<u8>>;
+type Input<'a> = Vec<Vec<u8>>;
 type Location = (usize, usize);
 
 const INPUT_VALUE_MAX: u8 = 9;
@@ -23,7 +23,7 @@ fn process(raw: &str) -> Input {
         if line.is_empty() {
             continue;
         }
-        let line_vec: Vec<u8> = line.chars().map(|x| (x as u8 - '0' as u8)).collect();
+        let line_vec: Vec<u8> = line.chars().map(|x| (x as u8 - b'0')).collect();
         result.push(line_vec);
     }
     result
@@ -46,7 +46,7 @@ fn get_neighbors(y: usize, x: usize, width: usize, height: usize) -> Vec<Locatio
     result
 }
 
-fn p1(input: &Input) -> usize {
+fn p1(input: &[Vec<u8>]) -> usize {
     let mut sum: usize = 0;
     let width = input[0].len();
     let height = input.len();
@@ -64,7 +64,7 @@ fn p1(input: &Input) -> usize {
     sum
 }
 
-fn should_visit(input: &Input, visited: &HashSet<Location>, y: usize, x: usize) -> bool {
+fn should_visit(input: &[Vec<u8>], visited: &HashSet<Location>, y: usize, x: usize) -> bool {
     input[y][x] < INPUT_VALUE_MAX && !visited.contains(&(y, x))
 }
 
@@ -73,7 +73,7 @@ fn should_visit(input: &Input, visited: &HashSet<Location>, y: usize, x: usize) 
 /// A depth-first traversal of connected basin locations. The `basin_set` records all the
 /// current-known basic locations. The function returns the size of the basin
 fn traverse_basin(
-    input: &Input,
+    input: &[Vec<u8>],
     basin_set: &mut HashSet<Location>,
     y: usize,
     x: usize,
@@ -95,7 +95,7 @@ fn traverse_basin(
     size
 }
 
-fn p2(input: &Input) -> usize {
+fn p2(input: &[Vec<u8>]) -> usize {
     let width = input[0].len();
     let height = input.len();
     let mut basin_set = HashSet::<Location>::with_capacity(width * height);

@@ -11,7 +11,7 @@ fn main() -> io::Result<()> {
 
 fn process(raw: &str) -> Vec<Vec<char>> {
     let mut result: Vec<_> = vec![];
-    for n in raw.split("\n") {
+    for n in raw.split('\n') {
         if n.is_empty() {
             continue;
         }
@@ -20,7 +20,7 @@ fn process(raw: &str) -> Vec<Vec<char>> {
     result
 }
 
-fn p1(input: &Vec<Vec<char>>) -> usize {
+fn p1(input: &[Vec<char>]) -> usize {
     let height = input.len();
     let width = input[0].len();
     let mut mcb: String = "".to_string();
@@ -37,10 +37,10 @@ fn p1(input: &Vec<Vec<char>>) -> usize {
     gamma_rate * epsilon_rate
 }
 
-fn get_nested_common_bits(input: &Vec<Vec<char>>, mcb: bool) -> usize {
+fn get_nested_common_bits(input: &[Vec<char>], mcb: bool) -> usize {
     let width = input[0].len();
     let mut bits: String = "".to_string();
-    let mut filtered: Vec<&Vec<char>> = input.into_iter().collect();
+    let mut filtered: Vec<&Vec<char>> = input.iter().collect();
     for i in 0..width {
         let sum = filtered.iter().filter(|x| x[i] == '1').count();
         let filtered_len = filtered.len();
@@ -60,9 +60,30 @@ fn get_nested_common_bits(input: &Vec<Vec<char>>, mcb: bool) -> usize {
     }
     usize::from_str_radix(&bits, 2).unwrap()
 }
-fn p2(input: &Vec<Vec<char>>) -> usize {
+fn p2(input: &[Vec<char>]) -> usize {
     let oxygen_generator_rating = get_nested_common_bits(input, true);
     let co2_scrubber_rating = get_nested_common_bits(input, false);
 
     oxygen_generator_rating * co2_scrubber_rating
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_p1() -> io::Result<()> {
+        let raw = fs::read_to_string(fs::canonicalize("./data/day3.txt")?)?;
+        let input = process(&raw);
+        assert_eq!(p1(&input), 741950);
+        Ok(())
+    }
+
+    #[test]
+    fn test_p2() -> io::Result<()> {
+        let raw = fs::read_to_string(fs::canonicalize("./data/day3.txt")?)?;
+        let input = process(&raw);
+        assert_eq!(p2(&input), 903810);
+        Ok(())
+    }
 }

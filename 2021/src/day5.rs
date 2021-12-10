@@ -26,8 +26,8 @@ impl FromStr for Line {
     type Err = ParseIntError;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let points: Vec<&str> = s.split(" -> ").collect();
-        let mut start_iter = points[0].split(",");
-        let mut end_iter = points[1].split(",");
+        let mut start_iter = points[0].split(',');
+        let mut end_iter = points[1].split(',');
         let mut start = (
             start_iter.next().unwrap().parse::<usize>()?,
             start_iter.next().unwrap().parse::<usize>()?,
@@ -38,23 +38,17 @@ impl FromStr for Line {
         );
         // invariant: start.0 <= end.0 || start.1 <= end.1
         let temp = start;
-        if start.0 > end.0 {
-            start = end;
-            end = temp;
-        } else if start.1 > end.1 {
+        if start.0 > end.0 || start.1 > end.1 {
             start = end;
             end = temp;
         }
-        Ok(Self {
-            start: start,
-            end: end,
-        })
+        Ok(Self { start, end })
     }
 }
 
 fn process(raw: &str) -> Vec<Line> {
     let mut result: Vec<_> = vec![];
-    for n in raw.split("\n") {
+    for n in raw.split('\n') {
         if n.is_empty() {
             continue;
         }
@@ -64,25 +58,7 @@ fn process(raw: &str) -> Vec<Line> {
     result
 }
 
-#[allow(dead_code)]
-fn print_map(map: &Vec<i32>) {
-    for i in 0..HEIGHT {
-        let mut str = "".to_string();
-        for j in 0..WIDTH {
-            let point = map[j * HEIGHT + i];
-            str.push(if point > 1 {
-                'x'
-            } else if point == 1 {
-                '1'
-            } else {
-                '.'
-            });
-        }
-        println!("{}", str);
-    }
-}
-
-fn draw_and_sum(input: &Vec<Line>, consider_horizontal_vertical_only: bool) -> u32 {
+fn draw_and_sum(input: &[Line], consider_horizontal_vertical_only: bool) -> u32 {
     let mut map = vec![0; HEIGHT * WIDTH];
     // draw lines
     for line in input {
@@ -125,10 +101,31 @@ fn draw_and_sum(input: &Vec<Line>, consider_horizontal_vertical_only: bool) -> u
     sum
 }
 
-fn p1(input: &Vec<Line>) -> u32 {
+fn p1(input: &[Line]) -> u32 {
     draw_and_sum(input, true)
 }
 
-fn p2(input: &Vec<Line>) -> u32 {
+fn p2(input: &[Line]) -> u32 {
     draw_and_sum(input, false)
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_p1() -> io::Result<()> {
+        let raw = fs::read_to_string(fs::canonicalize("./data/day5.txt")?)?;
+        let input = process(&raw);
+        assert_eq!(p1(&input), 5774);
+        Ok(())
+    }
+
+    #[test]
+    fn test_p2() -> io::Result<()> {
+        let raw = fs::read_to_string(fs::canonicalize("./data/day5.txt")?)?;
+        let input = process(&raw);
+        assert_eq!(p2(&input), 18423);
+        Ok(())
+    }
 }

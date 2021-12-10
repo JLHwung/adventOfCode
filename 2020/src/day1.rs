@@ -12,7 +12,7 @@ fn main() -> io::Result<()> {
 
 fn process(raw: &str) -> Vec<i32> {
     let mut result: Vec<i32> = vec![];
-    for n in raw.split("\n") {
+    for n in raw.split('\n') {
         if n.is_empty() {
             continue;
         }

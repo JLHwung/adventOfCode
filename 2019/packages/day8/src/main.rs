@@ -37,7 +37,7 @@ fn print_layer(layer: &Vec<char>) {
                 _ => unreachable!(),
             }
         }
-        print!("\n");
+        print!('\n');
     }
 }
 

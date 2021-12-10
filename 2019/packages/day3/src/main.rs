@@ -104,7 +104,7 @@ fn find_intersection_lowest_delay(wire1: &Vec<Segment>, wire2: &Vec<Segment>) ->
 fn wire_to_segments(wire: &str) -> Vec<Segment> {
     let mut start: [i32; 2] = [0, 0];
     let mut result: Vec<[[i32; 2]; 2]> = Vec::new();
-    for seg in wire.split(",") {
+    for seg in wire.split(',') {
         let direction: &str = &seg[0..1];
         let length: i32 = seg[1..].parse().unwrap();
         let mut new_start = start;

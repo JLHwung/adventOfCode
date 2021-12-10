@@ -11,7 +11,7 @@ fn main() -> io::Result<()> {
 
     let mut map: Vec<Vec<char>> = raw
         .trim_end()
-        .split("\n")
+        .split('\n')
         .map(|x| x.chars().collect())
         .collect();
 

@@ -17,7 +17,7 @@ fn process(raw: &str) -> Vec<Vec<u32>> {
         }
         // "abc\nad" => vec![0x111, 0x1001]
         result.push(
-            line.split("\n")
+            line.split('\n')
                 .filter(|x| !x.is_empty())
                 .map(|x| {
                     x.chars()

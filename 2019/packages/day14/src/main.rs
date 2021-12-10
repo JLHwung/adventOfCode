@@ -85,7 +85,7 @@ fn satisfy<'a>(
 }
 
 fn parse_recipes(raw: &String) -> RecipeMap {
-    raw.split("\n").fold(HashMap::new(), |mut acc, line: &str| {
+    raw.split('\n').fold(HashMap::new(), |mut acc, line: &str| {
         let caps: Vec<&str> = line.split(", ").collect();
         let dest = caps[caps.len() - 1];
         let dest_recipe = RecipeItem::parse(dest);

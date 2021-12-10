@@ -10,19 +10,19 @@ fn main() -> io::Result<()> {
     Ok(())
 }
 
-type Input = Vec<usize>;
+type Input = usize;
 
-fn process(raw: &str) -> Input {
+fn process(raw: &str) -> Vec<Input> {
     let mut result = vec![];
     for i in raw.split(',') {
         let int: usize = i.parse().unwrap();
         result.push(int)
     }
-    result.sort();
+    result.sort_unstable();
     result
 }
 
-fn p1(input: &Input) -> usize {
+fn p1(input: &[Input]) -> usize {
     let median = {
         let len = input.len();
         if len % 2 == 0 {
@@ -33,36 +33,50 @@ fn p1(input: &Input) -> usize {
     };
     let distance_sum = input
         .iter()
-        .map(|x| {
-            if x > &median {
-                x - &median
-            } else {
-                &median - x
-            }
-        })
-        .fold(0, |acc, x| acc + x);
+        .map(|x| if x > &median { x - median } else { median - x })
+        .sum();
     distance_sum
 }
 
-fn distance_sum(input: &Input, mean: usize) -> usize {
+fn distance_sum(input: &[Input], mean: usize) -> usize {
     input
         .iter()
         .map(|x| {
-            let euclid_distance = if x > &mean { x - &mean } else { &mean - x };
+            let euclid_distance = if x > &mean { x - mean } else { mean - x };
             euclid_distance * (euclid_distance + 1) / 2
         })
-        .fold(0, |acc, x| acc + x)
+        .sum()
 }
 
-fn p2(input: &Input) -> usize {
+fn p2(input: &[Input]) -> usize {
     let ceiling_mean = {
         let len = input.len();
-        let sum = input.iter().fold(0, |acc, x| acc + x);
+        let sum: usize = input.iter().sum();
         sum / len
     };
-    let distance_sum = cmp::min(
+    cmp::min(
         distance_sum(input, ceiling_mean),
         distance_sum(input, ceiling_mean + 1),
-    );
-    distance_sum
+    )
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_p1() -> io::Result<()> {
+        let raw = fs::read_to_string(fs::canonicalize("./data/day7.txt")?)?;
+        let input = process(&raw);
+        assert_eq!(p1(&input), 328262);
+        Ok(())
+    }
+
+    #[test]
+    fn test_p2() -> io::Result<()> {
+        let raw = fs::read_to_string(fs::canonicalize("./data/day7.txt")?)?;
+        let input = process(&raw);
+        assert_eq!(p2(&input), 90040997);
+        Ok(())
+    }
 }

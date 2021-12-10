@@ -2,7 +2,7 @@ use std::fs;
 use std::io;
 
 fn main() -> io::Result<()> {
-    let raw = fs::read_to_string(fs::canonicalize("./data/day1/input.txt")?)?;
+    let raw = fs::read_to_string(fs::canonicalize("./data/day1.txt")?)?;
     let input = process(&raw);
     println!("Answer of p1: {}", p1(&input));
     println!("Answer of p2: {}", p2(&input));
@@ -11,7 +11,7 @@ fn main() -> io::Result<()> {
 
 fn process(raw: &str) -> Vec<i32> {
     let mut result: Vec<i32> = vec![];
-    for n in raw.split("\n") {
+    for n in raw.split('\n') {
         if n.is_empty() {
             continue;
         }
@@ -21,7 +21,7 @@ fn process(raw: &str) -> Vec<i32> {
     result
 }
 
-fn p1(input: &Vec<i32>) -> i32 {
+fn p1(input: &[i32]) -> i32 {
     let mut prev = i32::MAX;
     let mut result = 0;
     for n in input {
@@ -33,7 +33,7 @@ fn p1(input: &Vec<i32>) -> i32 {
     result
 }
 
-fn p2(input: &Vec<i32>) -> i32 {
+fn p2(input: &[i32]) -> i32 {
     let mut result = 0;
     for i in 0..input.len() {
         if i >= 3 && input[i] > input[i - 3] {
@@ -41,4 +41,25 @@ fn p2(input: &Vec<i32>) -> i32 {
         }
     }
     result
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_p1() -> io::Result<()> {
+        let raw = fs::read_to_string(fs::canonicalize("./data/day1.txt")?)?;
+        let input = process(&raw);
+        assert_eq!(p1(&input), 1162);
+        Ok(())
+    }
+
+    #[test]
+    fn test_p2() -> io::Result<()> {
+        let raw = fs::read_to_string(fs::canonicalize("./data/day1.txt")?)?;
+        let input = process(&raw);
+        assert_eq!(p2(&input), 1190);
+        Ok(())
+    }
 }

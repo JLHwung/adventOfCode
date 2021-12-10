@@ -39,7 +39,7 @@ fn count_fish(x: &[usize; 9], days: isize) -> [usize; 9] {
 
 fn sum_fish_count(input: &[usize; 9], days: isize) -> usize {
     let mut sum = 0;
-    for v in count_fish(&input, days) {
+    for v in count_fish(input, days) {
         sum += v;
     }
     sum
@@ -51,4 +51,25 @@ fn p1(input: &[usize; 9]) -> usize {
 
 fn p2(input: &[usize; 9]) -> usize {
     sum_fish_count(input, 256)
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_p1() -> io::Result<()> {
+        let raw = fs::read_to_string(fs::canonicalize("./data/day6.txt")?)?;
+        let input = process(&raw);
+        assert_eq!(p1(&input), 360761);
+        Ok(())
+    }
+
+    #[test]
+    fn test_p2() -> io::Result<()> {
+        let raw = fs::read_to_string(fs::canonicalize("./data/day6.txt")?)?;
+        let input = process(&raw);
+        assert_eq!(p2(&input), 1632779838045);
+        Ok(())
+    }
 }
