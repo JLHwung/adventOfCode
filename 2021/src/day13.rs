@@ -31,7 +31,7 @@ struct Input {
 fn process(raw: &str) -> Input {
     let mut dots = HashSet::<Location>::new();
     let mut line_iter = raw.split('\n');
-    while let Some(line) = line_iter.next() {
+    for line in line_iter.by_ref() {
         if line.is_empty() {
             break;
         }
@@ -41,7 +41,7 @@ fn process(raw: &str) -> Input {
         dots.insert((x, y));
     }
     let mut foldings = vec![];
-    while let Some(line) = line_iter.next() {
+    for line in line_iter {
         // fold along x=42
         if line.is_empty() {
             break;
@@ -61,10 +61,8 @@ fn fold(dots: &mut Dots, folding: &Folding) {
             if dot.1 > axis {
                 to_be_removed.push(*dot);
             }
-        } else {
-            if dot.0 > axis {
-                to_be_removed.push(*dot);
-            }
+        } else if dot.0 > axis {
+            to_be_removed.push(*dot);
         }
     }
     for dot in to_be_removed {
@@ -103,7 +101,7 @@ fn print_dots(dots: &Dots) -> String {
 fn p2(input: &Input) -> String {
     let mut merged_dots = input.dots.clone();
     for folding in &input.foldings {
-        fold(&mut merged_dots, &folding);
+        fold(&mut merged_dots, folding);
     }
     print_dots(&merged_dots)
 }
