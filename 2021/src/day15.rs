@@ -1,5 +1,4 @@
-use std::cmp::Ordering;
-use std::collections::BinaryHeap;
+use std::cell::RefCell;
 use std::fs;
 use std::io;
 
@@ -19,34 +18,6 @@ struct Input {
     risk: Vec<u8>,
     width: usize,
     height: usize,
-}
-
-#[derive(Copy, Clone, Eq, PartialEq)]
-struct State {
-    cost: usize,
-    position: usize,
-}
-
-// The priority queue depends on `Ord`.
-// Explicitly implement the trait so the queue becomes a min-heap
-// instead of a max-heap.
-impl Ord for State {
-    fn cmp(&self, other: &Self) -> Ordering {
-        // Notice that the we flip the ordering on costs.
-        // In case of a tie we compare positions - this step is necessary
-        // to make implementations of `PartialEq` and `Ord` consistent.
-        other
-            .cost
-            .cmp(&self.cost)
-            .then_with(|| self.position.cmp(&other.position))
-    }
-}
-
-// `PartialOrd` needs to be implemented as well.
-impl PartialOrd for State {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.cmp(other))
-    }
 }
 
 fn process(raw: &str) -> Input {
@@ -72,7 +43,7 @@ fn process(raw: &str) -> Input {
     }
 }
 
-fn get_neighbors(p: usize, width: &usize, height: &usize) -> Vec<usize> {
+fn get_neighbors(p: &usize, width: &usize, height: &usize) -> Vec<usize> {
     let (y, x) = (p / width, p % width);
     let result: Vec<_> = vec![
         (y.overflowing_sub(1).0, x),
@@ -99,7 +70,35 @@ fn get_node_risk(risk: &[u8], p: usize, width: &usize, height: &usize, width_sca
     (risk[y_orig * height + x_orig] - 1 + x_chunk as u8 + y_chunk as u8) % RISK_MAX + 1
 }
 
-fn shortest_path(input: &Input, map_scaling: &usize) -> Option<usize> {
+fn risk_top_left_top_right_bottom_right(
+    input: &Input,
+    width_scaled: usize,
+    height_scaled: usize,
+) -> usize {
+    let Input {
+        risk,
+        width,
+        height,
+    } = input;
+    let risk_top_left_right: usize = (1..width_scaled)
+        .map(|p| get_node_risk(risk, p, width, height, &width_scaled) as usize)
+        .sum();
+    let risk_top_right_bottom: usize = (1..height_scaled)
+        .map(|p| {
+            get_node_risk(
+                risk,
+                (width_scaled - 1) + p * width_scaled,
+                width,
+                height,
+                &width_scaled,
+            ) as usize
+        })
+        .sum();
+    risk_top_left_right + risk_top_right_bottom
+}
+
+/// Dial's algorithm with improved buckets size upper bound
+fn shortest_path_from_top_left_to_bottom_right(input: &Input, map_scaling: &usize) -> usize {
     let Input {
         risk,
         width,
@@ -110,54 +109,54 @@ fn shortest_path(input: &Input, map_scaling: &usize) -> Option<usize> {
     let mut dist: Vec<_> = (0..width_scaled * height_scaled)
         .map(|_| usize::MAX)
         .collect();
-    let mut heap = BinaryHeap::new();
+
+    // Pre compute the risk of a path from top-left to bottom-right
+    // Use the risk as the upper bound of buckets
+    let bucket_size_upper_bound: usize = risk_top_left_top_right_bottom_right(input, width_scaled, height_scaled);
+
+    let buckets = vec![RefCell::new(vec![]); bucket_size_upper_bound];
     let goal = width_scaled * height_scaled - 1;
 
     dist[0] = 0;
-    heap.push(State {
-        cost: 0,
-        position: 0,
-    });
+    buckets[0].borrow_mut().push(0);
 
-    // Examine the frontier with lower cost nodes first (min-heap)
-    while let Some(State { cost, position }) = heap.pop() {
-        // Alternatively we could have continued to find all shortest paths
-        if position == goal {
-            return Some(cost);
-        }
+    for cost in 0..buckets.len() {
+        let nodes = buckets[cost].borrow();
+        for position in nodes.iter() {
+            if *position == goal {
+                return cost;
+            }
 
-        // Important as we may have already found a better way
-        if cost > dist[position] {
-            continue;
-        }
+            // Important as we may have already found a better way
+            if cost > dist[*position] {
+                continue;
+            }
+            // For each node we can reach, see if we can find a way with
+            // a lower cost going through this node
+            for node in get_neighbors(&position, &width_scaled, &height_scaled) {
+                let new_cost =
+                    cost + (get_node_risk(risk, node, width, height, &width_scaled) as usize);
 
-        // For each node we can reach, see if we can find a way with
-        // a lower cost going through this node
-        for node in get_neighbors(position, &width_scaled, &height_scaled) {
-            let next = State {
-                cost: cost + (get_node_risk(risk, node, width, height, &width_scaled) as usize),
-                position: node,
-            };
-
-            // If so, add it to the frontier and continue
-            if next.cost < dist[next.position] {
-                heap.push(next);
-                // Relaxation, we have now found a better way
-                dist[next.position] = next.cost;
+                // If so, add it to the frontier and continue
+                if new_cost < dist[node] {
+                    buckets[new_cost].borrow_mut().push(node);
+                    // Relaxation, we have now found a better way
+                    dist[node] = new_cost;
+                }
             }
         }
     }
 
     // Goal not reachable
-    None
+    unreachable!();
 }
 
 fn p1(input: &Input) -> usize {
-    shortest_path(input, &1).unwrap()
+    shortest_path_from_top_left_to_bottom_right(input, &1)
 }
 
 fn p2(input: &Input) -> usize {
-    shortest_path(input, &5).unwrap()
+    shortest_path_from_top_left_to_bottom_right(input, &5)
 }
 
 #[cfg(test)]
