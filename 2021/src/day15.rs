@@ -133,7 +133,7 @@ fn shortest_path_from_top_left_to_bottom_right(input: &Input, map_scaling: &usiz
             }
             // For each node we can reach, see if we can find a way with
             // a lower cost going through this node
-            for node in get_neighbors(&position, &width_scaled, &height_scaled) {
+            for node in get_neighbors(position, &width_scaled, &height_scaled) {
                 let new_cost =
                     cost + (get_node_risk(risk, node, width, height, &width_scaled) as usize);
 
