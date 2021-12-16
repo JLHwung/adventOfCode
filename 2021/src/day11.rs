@@ -1,13 +1,13 @@
-use std::fs;
-use std::io;
+macro_rules! DATA_PATH {
+    () => {
+        "../data/day11.txt"
+    };
+}
 
-const DATA_PATH: &str = "./data/day11.txt";
-
-fn main() -> io::Result<()> {
-    let raw = fs::read_to_string(fs::canonicalize(&DATA_PATH)?)?;
-    println!("Answer of p1: {}", p1(&raw));
-    println!("Answer of p2: {}", p2(&raw));
-    Ok(())
+fn main() {
+    let raw = include_str!(DATA_PATH!());
+    println!("Answer of p1: {}", p1(raw));
+    println!("Answer of p2: {}", p2(raw));
 }
 
 const FLASH_THRESHOLD: u8 = 10;
@@ -112,16 +112,14 @@ mod test {
     use super::*;
 
     #[test]
-    fn test_p1() -> io::Result<()> {
-        let raw = fs::read_to_string(fs::canonicalize(&DATA_PATH)?)?;
-        assert_eq!(p1(&raw), 1667);
-        Ok(())
+    fn test_p1() {
+        let raw = include_str!(DATA_PATH!());
+        assert_eq!(p1(raw), 1667);
     }
 
     #[test]
-    fn test_p2() -> io::Result<()> {
-        let raw = fs::read_to_string(fs::canonicalize(&DATA_PATH)?)?;
-        assert_eq!(p2(&raw), 488);
-        Ok(())
+    fn test_p2() {
+        let raw = include_str!(DATA_PATH!());
+        assert_eq!(p2(raw), 488);
     }
 }

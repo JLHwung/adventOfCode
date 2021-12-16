@@ -1,12 +1,14 @@
-use std::fs;
-use std::io;
+macro_rules! DATA_PATH {
+    () => {
+        "../data/day3.txt"
+    };
+}
 
-fn main() -> io::Result<()> {
-    let raw = fs::read_to_string(fs::canonicalize("./data/day3.txt")?)?;
-    let input = process(&raw);
+fn main() {
+    let raw = include_str!(DATA_PATH!());
+    let input = process(raw);
     println!("Answer of p1: {}", p1(&input));
     println!("Answer of p2: {}", p2(&input));
-    Ok(())
 }
 
 fn process(raw: &str) -> Vec<Vec<char>> {
@@ -72,18 +74,16 @@ mod test {
     use super::*;
 
     #[test]
-    fn test_p1() -> io::Result<()> {
-        let raw = fs::read_to_string(fs::canonicalize("./data/day3.txt")?)?;
-        let input = process(&raw);
+    fn test_p1() {
+        let raw = include_str!(DATA_PATH!());
+        let input = process(raw);
         assert_eq!(p1(&input), 741950);
-        Ok(())
     }
 
     #[test]
-    fn test_p2() -> io::Result<()> {
-        let raw = fs::read_to_string(fs::canonicalize("./data/day3.txt")?)?;
-        let input = process(&raw);
+    fn test_p2() {
+        let raw = include_str!(DATA_PATH!());
+        let input = process(raw);
         assert_eq!(p2(&input), 903810);
-        Ok(())
     }
 }

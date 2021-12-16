@@ -1,15 +1,18 @@
 use std::cell::Cell;
 use std::collections::HashSet;
-use std::fs;
-use std::io;
 
-fn main() -> io::Result<()> {
-    let raw = fs::read_to_string(fs::canonicalize("./data/day4.txt")?)?;
+macro_rules! DATA_PATH {
+    () => {
+        "../data/day4.txt"
+    };
+}
+
+fn main() {
+    let raw = include_str!(DATA_PATH!());
     let state = new_state();
-    let input = process(&raw, &state);
+    let input = process(raw, &state);
     println!("Answer of p1: {}", p1(&input, &state));
     println!("Answer of p2: {}", p2(&input, &state));
-    Ok(())
 }
 
 const WIDTH: usize = 5;
@@ -138,20 +141,18 @@ mod test {
     use super::*;
 
     #[test]
-    fn test_p1() -> io::Result<()> {
-        let raw = fs::read_to_string(fs::canonicalize("./data/day4.txt")?)?;
+    fn test_p1() {
+        let raw = include_str!(DATA_PATH!());
         let state = new_state();
         let input = process(&raw, &state);
         assert_eq!(p1(&input, &state), 6592);
-        Ok(())
     }
 
     #[test]
-    fn test_p2() -> io::Result<()> {
-        let raw = fs::read_to_string(fs::canonicalize("./data/day4.txt")?)?;
+    fn test_p2() {
+        let raw = include_str!(DATA_PATH!());
         let state = new_state();
         let input = process(&raw, &state);
         assert_eq!(p2(&input, &state), 31755);
-        Ok(())
     }
 }

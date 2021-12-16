@@ -1,15 +1,16 @@
 use std::collections::{HashMap, HashSet};
-use std::fs;
-use std::io;
 
-const DATA_PATH: &str = "./data/day12.txt";
+macro_rules! DATA_PATH {
+    () => {
+        "../data/day12.txt"
+    };
+}
 
-fn main() -> io::Result<()> {
-    let raw = fs::read_to_string(fs::canonicalize(&DATA_PATH)?)?;
-    let input = process(&raw);
+fn main() {
+    let raw = include_str!(DATA_PATH!());
+    let input = process(raw);
     println!("Answer of p1: {}", p1(&input));
     println!("Answer of p2: {}", p2(&input));
-    Ok(())
 }
 
 /// The input graph is modeled by a HashMap from node to their neighbors
@@ -144,18 +145,16 @@ mod test {
     use super::*;
 
     #[test]
-    fn test_p1() -> io::Result<()> {
-        let raw = fs::read_to_string(fs::canonicalize(&DATA_PATH)?)?;
-        let input = process(&raw);
+    fn test_p1() {
+        let raw = include_str!(DATA_PATH!());
+        let input = process(raw);
         assert_eq!(p1(&input), 3856);
-        Ok(())
     }
 
     #[test]
-    fn test_p2() -> io::Result<()> {
-        let raw = fs::read_to_string(fs::canonicalize(&DATA_PATH)?)?;
-        let input = process(&raw);
+    fn test_p2() {
+        let raw = include_str!(DATA_PATH!());
+        let input = process(raw);
         assert_eq!(p2(&input), 116692);
-        Ok(())
     }
 }

@@ -1,16 +1,17 @@
 use std::cmp::max;
 use std::collections::HashSet;
-use std::fs;
-use std::io;
 
-const DATA_PATH: &str = "./data/day13.txt";
+macro_rules! DATA_PATH {
+    () => {
+        "../data/day13.txt"
+    };
+}
 
-fn main() -> io::Result<()> {
-    let raw = fs::read_to_string(fs::canonicalize(&DATA_PATH)?)?;
-    let input = process(&raw);
+fn main() {
+    let raw = include_str!(DATA_PATH!());
+    let input = process(raw);
     println!("Answer of p1: {}", p1(&input));
     println!("Answer of p2: {}", p2(&input));
-    Ok(())
 }
 
 type Location = (usize, usize);
@@ -111,17 +112,16 @@ mod test {
     use super::*;
 
     #[test]
-    fn test_p1() -> io::Result<()> {
-        let raw = fs::read_to_string(fs::canonicalize(&DATA_PATH)?)?;
-        let input = process(&raw);
+    fn test_p1() {
+        let raw = include_str!(DATA_PATH!());
+        let input = process(raw);
         assert_eq!(p1(&input), 653);
-        Ok(())
     }
 
     #[test]
-    fn test_p2() -> io::Result<()> {
-        let raw = fs::read_to_string(fs::canonicalize(&DATA_PATH)?)?;
-        let input = process(&raw);
+    fn test_p2() {
+        let raw = include_str!(DATA_PATH!());
+        let input = process(raw);
         assert_eq!(
             p2(&input),
             "
@@ -132,6 +132,5 @@ mod test {
 #    # #  # #  #    #  # #    # #  # # 
 #### #  # #  # #### ###  #    #  # #  #"
         );
-        Ok(())
     }
 }
