@@ -13,19 +13,23 @@ fn main() {
     println!("Answer of p2: {}", p2(&input));
 }
 
-struct Input<'a> {
-    labels: HashMap<&'a str, u8>,
-    big_cave_ids: HashSet<u8>,
-    /// The map is modeled by a HashMap from node to their neighbors
-    map: HashMap<u8, Vec<u8>>,
-}
-
+/// Map cave label to u8
 const START_CAVE_LABEL: u8 = 0;
 const END_CAVE_LABEL: u8 = 1;
 
+/// The input is modeled by a HashMap from small cave to their merged neighbors
+/// For example, if we have an adjacent list [start-A, start-end, A-end]
+/// and denote start by 0, A by 2, end by 1, we will forward A's children to A's parent
+/// so the merged neighbor records are
+/// HashMap {
+///   0: HashMap { 1: 2 }
+///   1: HashMap { 0: 2 }
+/// }
+type Input = HashMap<u8, HashMap<u8, usize>>;
+
 fn process(raw: &str) -> Input {
     let mut labels = HashMap::from([("start", START_CAVE_LABEL), ("end", END_CAVE_LABEL)]);
-    let mut map = HashMap::new();
+    let mut raw_map = HashMap::new();
     let mut big_cave_ids = HashSet::new();
     let mut register_index = |a| {
         let index = labels.len() as u8;
@@ -37,7 +41,7 @@ fn process(raw: &str) -> Input {
         })
     };
     let mut register_edge =
-        |from_id, to_id| map.entry(from_id).or_insert_with(Vec::new).push(to_id);
+        |from_id, to_id| raw_map.entry(from_id).or_insert_with(Vec::new).push(to_id);
 
     for line in raw.split('\n') {
         if line.is_empty() {
@@ -49,116 +53,131 @@ fn process(raw: &str) -> Input {
         register_edge(from_id, to_id);
         register_edge(to_id, from_id);
     }
-    Input {
-        labels,
-        big_cave_ids,
-        map,
+
+    // forward big cave's children (must be small caves) to its parent (must be small caves)
+    let mut map = HashMap::new();
+    for (key, children) in raw_map.iter() {
+        if big_cave_ids.contains(key) {
+            continue;
+        }
+        let mut children_count_map = HashMap::<u8, usize>::new();
+        for child in children {
+            if big_cave_ids.contains(child) {
+                let big_cave_children = raw_map.get(child).unwrap();
+                for child in big_cave_children.iter() {
+                    let count = children_count_map.entry(*child).or_insert(0);
+                    *count += 1;
+                }
+            } else {
+                let count = children_count_map.entry(*child).or_insert(0);
+                *count += 1;
+            }
+        }
+        map.insert(*key, children_count_map);
     }
+
+    map
 }
 
 struct P1State {
     current_cave: u8,
-    visited_small_caves: HashSet<u8>,
+    // The distance to the END_CAVE
+    distance: usize,
+    // The number of valid paths from current_cave to END_CAVE,
+    // when current_cave is END_CAVE, it is defined as 1
+    sum: usize,
 }
 
 fn p1(input: &Input) -> usize {
-    let Input {
-        map, big_cave_ids, ..
-    } = input;
     let initial_state = P1State {
-        current_cave: START_CAVE_LABEL,
-        visited_small_caves: HashSet::from([START_CAVE_LABEL]),
+        current_cave: END_CAVE_LABEL,
+        distance: 0,
+        sum: 1,
     };
-    let mut path_stack = vec![initial_state];
+    let mut solution_stack = vec![initial_state];
     let mut count = 0;
+    // A memory for visited small caves in reversing order, visited[0] is always END_CAVE
+    // its distance can not be greater than the number of small caves minus 1, otherwise
+    // there must be two duplicate small caves
+    let mut visited = vec![END_CAVE_LABEL; input.len() - 1];
     while let Some(P1State {
         current_cave,
-        visited_small_caves,
-    }) = path_stack.pop()
+        distance,
+        sum,
+    }) = solution_stack.pop()
     {
-        if current_cave == END_CAVE_LABEL {
-            count += 1;
-        } else {
-            let candidates = map.get(&current_cave).unwrap().iter().filter_map(|&cave| {
-                if big_cave_ids.contains(&cave) {
-                    Some(P1State {
-                        current_cave: cave,
-                        visited_small_caves: visited_small_caves.clone(),
-                    })
-                } else if !visited_small_caves.contains(&cave) {
-                    let mut new_visited_small_caves = visited_small_caves.clone();
-                    new_visited_small_caves.insert(cave);
-                    Some(P1State {
-                        current_cave: cave,
-                        visited_small_caves: new_visited_small_caves,
-                    })
-                } else {
-                    None
+        visited[distance] = current_cave;
+        for (prev_cave, connection_count) in &input[&current_cave] {
+            match *prev_cave {
+                START_CAVE_LABEL => count += connection_count * sum,
+                END_CAVE_LABEL => {}
+                cave => {
+                    // invariant: visited[0] is always END_CAVE and thus must not
+                    // contain other small cave. Here we can skip visited[0]
+                    if !visited[1..=distance].contains(&cave) {
+                        solution_stack.push(P1State {
+                            current_cave: cave,
+                            distance: distance + 1,
+                            sum: sum * connection_count,
+                        });
+                    }
                 }
-            });
-            for candidate in candidates {
-                path_stack.push(candidate);
             }
         }
     }
     count
 }
 
+// See P1State for definition of `distance` and `sum`
 struct P2State {
     current_cave: u8,
-    visited_small_caves: HashSet<u8>,
-    has_visited_small_cave_twice: bool,
+    distance: usize,
+    sum: usize,
+    visited_cave_twice: bool,
 }
 
 fn p2(input: &Input) -> usize {
     let initial_state = P2State {
-        current_cave: START_CAVE_LABEL,
-        visited_small_caves: HashSet::from([START_CAVE_LABEL]),
-        has_visited_small_cave_twice: false,
+        current_cave: END_CAVE_LABEL,
+        distance: 0,
+        sum: 1,
+        visited_cave_twice: false,
     };
-    let Input {
-        map, big_cave_ids, ..
-    } = input;
-    let mut path_stack = vec![initial_state];
+    let mut solution_stack = vec![initial_state];
     let mut count = 0;
+    // A memory for visited small caves in reversing order
+    // its distance can not be greater than the number of small caves, otherwise
+    // there must be more than one duplicate small caves
+    let mut visited = vec![END_CAVE_LABEL; input.len()];
     while let Some(P2State {
         current_cave,
-        visited_small_caves,
-        has_visited_small_cave_twice,
-    }) = path_stack.pop()
+        distance,
+        sum,
+        visited_cave_twice,
+    }) = solution_stack.pop()
     {
-        if current_cave == END_CAVE_LABEL {
-            count += 1;
-        } else {
-            let candidates = map.get(&current_cave).unwrap().iter().filter_map(|&cave| {
-                if big_cave_ids.contains(&cave) {
-                    Some(P2State {
-                        current_cave: cave,
-                        visited_small_caves: visited_small_caves.clone(),
-                        has_visited_small_cave_twice,
-                    })
-                } else if cave == START_CAVE_LABEL {
-                    None
-                } else if !visited_small_caves.contains(&cave) {
-                    let mut new_visited_small_caves = visited_small_caves.clone();
-                    new_visited_small_caves.insert(cave);
-                    Some(P2State {
-                        current_cave: cave,
-                        visited_small_caves: new_visited_small_caves,
-                        has_visited_small_cave_twice,
-                    })
-                } else if !has_visited_small_cave_twice {
-                    Some(P2State {
-                        current_cave: cave,
-                        visited_small_caves: visited_small_caves.clone(),
-                        has_visited_small_cave_twice: true,
-                    })
-                } else {
-                    None
+        visited[distance] = current_cave;
+        for (prev_cave, connection_count) in &input[&current_cave] {
+            match *prev_cave {
+                START_CAVE_LABEL => count += connection_count * sum,
+                END_CAVE_LABEL => {}
+                cave => {
+                    if !visited[1..=distance].contains(&cave) {
+                        solution_stack.push(P2State {
+                            current_cave: cave,
+                            distance: distance + 1,
+                            sum: sum * connection_count,
+                            visited_cave_twice,
+                        });
+                    } else if !visited_cave_twice {
+                        solution_stack.push(P2State {
+                            current_cave: cave,
+                            distance: distance + 1,
+                            sum: sum * connection_count,
+                            visited_cave_twice: true,
+                        });
+                    }
                 }
-            });
-            for candidate in candidates {
-                path_stack.push(candidate);
             }
         }
     }
