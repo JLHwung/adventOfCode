@@ -31,14 +31,8 @@ impl FromStr for Line {
         let (start_text, end_text) = s.split_once(" -> ").unwrap();
         let (x_s, y_s) = start_text.split_once(',').unwrap();
         let (x_e, y_e) = end_text.split_once(',').unwrap();
-        let mut start = (
-            x_s.parse()?,
-            y_s.parse()?,
-        );
-        let mut end = (
-            x_e.parse()?,
-            y_e.parse()?,
-        );
+        let mut start = (x_s.parse()?, y_s.parse()?);
+        let mut end = (x_e.parse()?, y_e.parse()?);
         // invariant: start.0 <= end.0 || start.1 <= end.1
         let temp = start;
         if start.0 > end.0 || start.1 > end.1 {
