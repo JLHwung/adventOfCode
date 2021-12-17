@@ -53,6 +53,7 @@ fn shortest_path_from_top_left_to_bottom_right(input: &Input, map_scaling: &usiz
     } = input;
     let width_scaled = width * map_scaling;
     let height_scaled = height * map_scaling;
+    let size_scaled = width_scaled * height_scaled;
 
     let get_node_risk = |p: usize| -> usize {
         let (y, x) = (p / width_scaled, p % width_scaled);
@@ -74,23 +75,20 @@ fn shortest_path_from_top_left_to_bottom_right(input: &Input, map_scaling: &usiz
         .collect::<Vec<_>>()
     };
 
-    let mut dist: Vec<_> = (0..width_scaled * height_scaled)
-        .map(|_| usize::MAX)
-        .collect();
-
     // Pre compute the risk of a path from top-left to bottom-right
     // Use the risk as the upper bound of buckets
     let bucket_size_upper_bound: usize = {
         let risk_top_left_right: usize = (1..width_scaled).map(get_node_risk).sum();
-        let risk_top_right_bottom: usize = (2 * width_scaled - 1..dist.len())
+        let risk_top_right_bottom: usize = (2 * width_scaled - 1..size_scaled)
             .step_by(width_scaled)
             .map(get_node_risk)
             .sum();
         risk_top_left_right + risk_top_right_bottom
     };
 
+    let mut dist = vec![bucket_size_upper_bound; size_scaled];
     let buckets = vec![RefCell::new(vec![]); bucket_size_upper_bound];
-    let goal = width_scaled * height_scaled - 1;
+    let goal = size_scaled - 1;
 
     dist[0] = 0;
     buckets[0].borrow_mut().push(0);
