@@ -35,28 +35,23 @@ fn token_match_openning_element(token: &Token, openning: &Token) -> bool {
 type Input<'a> = Vec<Token>;
 
 fn process(raw: &str) -> Vec<Input> {
-    let mut result = vec![];
-    for line in raw.split('\n') {
-        if line.is_empty() {
-            continue;
-        }
-        let tokens: Vec<Token> = line
-            .chars()
-            .map(|c| match c {
-                '(' => Token::ParenL,
-                ')' => Token::ParenR,
-                '[' => Token::BracketL,
-                ']' => Token::BracketR,
-                '{' => Token::CurlyBracketL,
-                '}' => Token::CurlyBracketR,
-                '<' => Token::Lt,
-                '>' => Token::Gt,
-                _ => unreachable!(),
-            })
-            .collect();
-        result.push(tokens);
-    }
-    result
+    raw.lines()
+        .map(|line| {
+            line.chars()
+                .map(|c| match c {
+                    '(' => Token::ParenL,
+                    ')' => Token::ParenR,
+                    '[' => Token::BracketL,
+                    ']' => Token::BracketR,
+                    '{' => Token::CurlyBracketL,
+                    '}' => Token::CurlyBracketR,
+                    '<' => Token::Lt,
+                    '>' => Token::Gt,
+                    _ => unreachable!(),
+                })
+                .collect()
+        })
+        .collect()
 }
 
 fn p1(input: &[Input]) -> usize {

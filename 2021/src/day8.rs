@@ -29,14 +29,15 @@ type Input<'a> = Observation<'a>;
 type Transform = Vec<u8>;
 
 fn process(raw: &str) -> Vec<Input> {
-    let mut result = vec![];
-    for line in raw.split('\n') {
-        let mut iter = line.split(" | ");
-        let signals: Vec<_> = iter.next().unwrap().split(' ').collect();
-        let outputs: Vec<_> = iter.next().unwrap().split(' ').collect();
-        result.push(Observation { signals, outputs })
-    }
-    result
+    raw.lines()
+        .map(|line| {
+            let (signals_text, outputs_text) = line.split_once(" | ").unwrap();
+            Observation {
+                signals: signals_text.split(' ').collect(),
+                outputs: outputs_text.split(' ').collect(),
+            }
+        })
+        .collect()
 }
 
 fn p1(input: &[Input]) -> usize {

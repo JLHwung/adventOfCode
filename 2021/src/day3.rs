@@ -12,14 +12,7 @@ fn main() {
 }
 
 fn process(raw: &str) -> Vec<Vec<char>> {
-    let mut result: Vec<_> = vec![];
-    for n in raw.split('\n') {
-        if n.is_empty() {
-            continue;
-        }
-        result.push(n.chars().collect())
-    }
-    result
+    raw.lines().map(|n| n.chars().collect()).collect()
 }
 
 fn p1(input: &[Vec<char>]) -> usize {

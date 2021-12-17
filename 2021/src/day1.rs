@@ -11,38 +11,22 @@ fn main() {
     println!("Answer of p2: {}", p2(&input));
 }
 
-fn process(raw: &str) -> Vec<i32> {
-    let mut result: Vec<i32> = vec![];
-    for n in raw.split('\n') {
-        if n.is_empty() {
-            continue;
-        }
-        let int: i32 = n.parse().unwrap();
-        result.push(int)
-    }
-    result
+fn process(raw: &str) -> Vec<u16> {
+    raw.lines().map(|n| n.parse().unwrap()).collect()
 }
 
-fn p1(input: &[i32]) -> i32 {
-    let mut prev = i32::MAX;
-    let mut result = 0;
-    for n in input {
-        if *n > prev {
-            result += 1;
-        }
-        prev = *n;
-    }
-    result
+fn p1(input: &[u16]) -> usize {
+    (1..input.len())
+        .into_iter()
+        .filter(|&i| input[i] > input[i - 1])
+        .count()
 }
 
-fn p2(input: &[i32]) -> i32 {
-    let mut result = 0;
-    for i in 0..input.len() {
-        if i >= 3 && input[i] > input[i - 3] {
-            result += 1
-        }
-    }
-    result
+fn p2(input: &[u16]) -> usize {
+    (3..input.len())
+        .into_iter()
+        .filter(|&i| input[i] > input[i - 3])
+        .count()
 }
 
 #[cfg(test)]

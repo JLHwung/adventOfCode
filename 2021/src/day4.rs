@@ -101,10 +101,7 @@ fn has_win(board: &Board) -> bool {
 }
 
 fn sum_unmarked(board: &Board) -> usize {
-    board
-        .iter()
-        .filter_map(|x| if !x.1.get() { Some(x.0) } else { None })
-        .sum()
+    board.iter().filter_map(|x| (!x.1.get()).then(|| x.0)).sum()
 }
 fn p1(input: &Game, state: &[StateElement]) -> usize {
     let boards = &input.boards;

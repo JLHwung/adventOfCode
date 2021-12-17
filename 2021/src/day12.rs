@@ -43,40 +43,36 @@ fn process(raw: &str) -> Input {
     let mut register_edge =
         |from_id, to_id| raw_map.entry(from_id).or_insert_with(Vec::new).push(to_id);
 
-    for line in raw.split('\n') {
-        if line.is_empty() {
-            continue;
-        }
+    for line in raw.lines() {
         let (from, to) = line.split_once('-').unwrap();
-
         let (from_id, to_id) = (register_index(from), register_index(to));
         register_edge(from_id, to_id);
         register_edge(to_id, from_id);
     }
 
     // forward big cave's children (must be small caves) to its parent (must be small caves)
-    let mut map = HashMap::new();
-    for (key, children) in raw_map.iter() {
-        if big_cave_ids.contains(key) {
-            continue;
-        }
-        let mut children_count_map = HashMap::<u8, usize>::new();
-        for child in children {
-            if big_cave_ids.contains(child) {
-                let big_cave_children = raw_map.get(child).unwrap();
-                for child in big_cave_children.iter() {
+    raw_map
+        .iter()
+        .filter_map(|(key, children)| {
+            if big_cave_ids.contains(key) {
+                return None;
+            }
+            let mut children_count_map = HashMap::<u8, usize>::new();
+            for child in children {
+                if big_cave_ids.contains(child) {
+                    let big_cave_children = raw_map.get(child).unwrap();
+                    for child in big_cave_children.iter() {
+                        let count = children_count_map.entry(*child).or_insert(0);
+                        *count += 1;
+                    }
+                } else {
                     let count = children_count_map.entry(*child).or_insert(0);
                     *count += 1;
                 }
-            } else {
-                let count = children_count_map.entry(*child).or_insert(0);
-                *count += 1;
             }
-        }
-        map.insert(*key, children_count_map);
-    }
-
-    map
+            Some((*key, children_count_map))
+        })
+        .collect()
 }
 
 struct P1State {

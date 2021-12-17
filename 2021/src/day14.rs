@@ -30,27 +30,24 @@ struct Input {
 }
 
 fn process(raw: &str) -> Input {
-    let chunks: Vec<_> = raw.split("\n\n").collect();
+    let (node_text, rule_text) = raw.split_once("\n\n").unwrap();
+    let chars: Vec<_> = node_text.chars().collect();
     let mut pairs = HashMap::<Pair, usize>::new();
-    let chars: Vec<_> = chunks[0].chars().collect();
     for i in 0..chars.len() - 1 {
         let count = pairs.entry((chars[i], chars[i + 1])).or_insert(0);
         *count += 1
     }
     let end = (chars[chars.len() - 1], chars[0]);
 
-    let mut rules = HashMap::<Pair, (Pair, Pair)>::new();
-    for line in chunks[1].split('\n') {
-        if line.is_empty() {
-            continue;
-        }
-        // MM -> N
-        let chars: Vec<_> = line.chars().collect();
-        rules.insert(
-            (chars[0], chars[1]),
-            ((chars[0], chars[6]), (chars[6], chars[1])),
-        );
-    }
+    let rules = rule_text
+        .lines()
+        .map(|line| {
+            let chars: Vec<_> = line.chars().collect();
+            let key = (chars[0], chars[1]);
+            let value = ((chars[0], chars[6]), (chars[6], chars[1]));
+            (key, value)
+        })
+        .collect();
     Input { end, pairs, rules }
 }
 

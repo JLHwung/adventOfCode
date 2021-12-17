@@ -25,10 +25,7 @@ fn process(raw: &str) -> Input {
     let mut width = 0;
     let mut height = 0;
     let mut risk = vec![];
-    for line in raw.split('\n') {
-        if line.is_empty() {
-            break;
-        }
+    for line in raw.lines() {
         for ch in line.chars() {
             risk.push(ch as u8 - b'0');
         }

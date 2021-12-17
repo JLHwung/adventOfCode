@@ -28,16 +28,16 @@ struct Line {
 impl FromStr for Line {
     type Err = ParseIntError;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let points: Vec<&str> = s.split(" -> ").collect();
-        let mut start_iter = points[0].split(',');
-        let mut end_iter = points[1].split(',');
+        let (start_text, end_text) = s.split_once(" -> ").unwrap();
+        let (x_s, y_s) = start_text.split_once(',').unwrap();
+        let (x_e, y_e) = end_text.split_once(',').unwrap();
         let mut start = (
-            start_iter.next().unwrap().parse::<usize>()?,
-            start_iter.next().unwrap().parse::<usize>()?,
+            x_s.parse()?,
+            y_s.parse()?,
         );
         let mut end = (
-            end_iter.next().unwrap().parse::<usize>()?,
-            end_iter.next().unwrap().parse::<usize>()?,
+            x_e.parse()?,
+            y_e.parse()?,
         );
         // invariant: start.0 <= end.0 || start.1 <= end.1
         let temp = start;
@@ -50,15 +50,7 @@ impl FromStr for Line {
 }
 
 fn process(raw: &str) -> Vec<Line> {
-    let mut result: Vec<_> = vec![];
-    for n in raw.split('\n') {
-        if n.is_empty() {
-            continue;
-        }
-        let line: Line = n.parse().unwrap();
-        result.push(line)
-    }
-    result
+    raw.lines().map(|line| line.parse().unwrap()).collect()
 }
 
 fn draw_and_sum(input: &[Line], consider_horizontal_vertical_only: bool) -> u32 {

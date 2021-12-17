@@ -21,15 +21,9 @@ const INPUT_VALUE_MAX: u8 = 9;
 const BASIN_SIZE_TOP_K: usize = 3;
 
 fn process(raw: &str) -> Input {
-    let mut result = vec![];
-    for line in raw.split('\n') {
-        if line.is_empty() {
-            continue;
-        }
-        let line_vec: Vec<u8> = line.chars().map(|x| (x as u8 - b'0')).collect();
-        result.push(line_vec);
-    }
-    result
+    raw.lines()
+        .map(|line| line.chars().map(|c| c as u8 - b'0').collect())
+        .collect()
 }
 
 fn get_neighbors(y: usize, x: usize, width: usize, height: usize) -> Vec<Location> {

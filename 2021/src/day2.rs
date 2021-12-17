@@ -33,15 +33,9 @@ impl FromStr for Move {
     type Err = ParseMoveError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let mut iter = s.split(' ');
-        let op = iter.next().unwrap();
-        let val = iter
-            .next()
-            .unwrap()
-            .parse::<i32>()
-            .map_err(|_| ParseMoveError)?;
+        let (op, val) = s.split_once(' ').unwrap();
         Ok(Move {
-            value: val,
+            value: val.parse().map_err(|_| ParseMoveError)?,
             op: match op {
                 "forward" => MoveOperation::Forward,
                 "down" => MoveOperation::Down,
@@ -53,15 +47,7 @@ impl FromStr for Move {
 }
 
 fn process(raw: &str) -> Vec<Move> {
-    let mut result: Vec<Move> = vec![];
-    for n in raw.split('\n') {
-        if n.is_empty() {
-            continue;
-        }
-        let mov: Move = n.parse().unwrap();
-        result.push(mov)
-    }
-    result
+    raw.lines().map(|n| n.parse().unwrap()).collect()
 }
 
 fn p1(input: &[Move]) -> i32 {

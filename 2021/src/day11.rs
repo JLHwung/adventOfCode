@@ -16,15 +16,9 @@ type Input = Vec<Vec<u8>>;
 type Location = (usize, usize);
 
 fn process(raw: &str) -> Input {
-    let mut result = vec![];
-    for line in raw.split('\n') {
-        if line.is_empty() {
-            continue;
-        }
-        let tokens: Vec<_> = line.chars().map(|c| c as u8 - b'0').collect();
-        result.push(tokens);
-    }
-    result
+    raw.lines()
+        .map(|line| line.chars().map(|c| c as u8 - b'0').collect())
+        .collect()
 }
 
 fn get_neighbors(y: usize, x: usize, width: &usize, height: &usize) -> Vec<Location> {

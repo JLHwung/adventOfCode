@@ -1,4 +1,3 @@
-use std::cmp;
 macro_rules! DATA_PATH {
     () => {
         "../data/day7.txt"
@@ -15,11 +14,7 @@ fn main() {
 type Input = usize;
 
 fn process(raw: &str) -> Vec<Input> {
-    let mut result = vec![];
-    for i in raw.split(',') {
-        let int: usize = i.parse().unwrap();
-        result.push(int)
-    }
+    let mut result: Vec<_> = raw.split(',').map(|i| i.parse().unwrap()).collect();
     result.sort_unstable();
     result
 }
@@ -56,7 +51,7 @@ fn p2(input: &[Input]) -> usize {
         let sum: usize = input.iter().sum();
         sum / len
     };
-    cmp::min(
+    usize::min(
         distance_sum(input, ceiling_mean),
         distance_sum(input, ceiling_mean + 1),
     )

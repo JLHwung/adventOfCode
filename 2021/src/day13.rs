@@ -30,27 +30,22 @@ struct Input {
 }
 
 fn process(raw: &str) -> Input {
-    let mut dots = HashSet::<Location>::new();
-    let mut line_iter = raw.split('\n');
-    for line in line_iter.by_ref() {
-        if line.is_empty() {
-            break;
-        }
-        let mut value_iter = line.split(',');
-        let x: usize = value_iter.next().unwrap().parse().unwrap();
-        let y: usize = value_iter.next().unwrap().parse().unwrap();
-        dots.insert((x, y));
-    }
-    let mut foldings = vec![];
-    for line in line_iter {
-        // fold along x=42
-        if line.is_empty() {
-            break;
-        }
-        let horizontal = &line[11..12] == "y";
-        let axis: usize = line[13..].parse().unwrap();
-        foldings.push(Folding { horizontal, axis });
-    }
+    let (dots_text, foldings_text) = raw.split_once("\n\n").unwrap();
+    let dots = dots_text
+        .lines()
+        .map(|line| {
+            let (x, y) = line.split_once(',').unwrap();
+            (x.parse().unwrap(), y.parse().unwrap())
+        })
+        .collect();
+    let foldings = foldings_text
+        .lines()
+        .map(|line| {
+            let horizontal = &line[11..12] == "y";
+            let axis: usize = line[13..].parse().unwrap();
+            Folding { horizontal, axis }
+        })
+        .collect();
     Input { dots, foldings }
 }
 
