@@ -1,0 +1,16 @@
+on: [push, pull_request]
+
+name: CI
+
+jobs:
+  test_2021:
+    name: Test AoC 2021
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: "2021"
+    steps:
+      - uses: actions/checkout@v2
+      - run: cargo check
+      - run: cargo test --release
+      - run: cargo clippy -- -D warnings
