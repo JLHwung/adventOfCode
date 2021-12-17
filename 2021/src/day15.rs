@@ -13,7 +13,7 @@ fn main() {
     println!("Answer of p2: {}", p2(&input));
 }
 
-const RISK_MAX: u8 = 9;
+const RISK_MAX: usize = 9;
 
 struct Input {
     risk: Vec<u8>,
@@ -44,60 +44,6 @@ fn process(raw: &str) -> Input {
     }
 }
 
-fn get_neighbors(p: &usize, width: &usize, height: &usize) -> Vec<usize> {
-    let (y, x) = (p / width, p % width);
-    let result: Vec<_> = vec![
-        (y.overflowing_sub(1).0, x),
-        (y, x + 1),
-        (y + 1, x),
-        (y, x.overflowing_sub(1).0),
-    ]
-    .into_iter()
-    .filter_map(|(y, x)| {
-        if y < *height && x < *width {
-            Some(y * height + x)
-        } else {
-            None
-        }
-    })
-    .collect();
-    result
-}
-
-fn get_node_risk(risk: &[u8], p: usize, width: &usize, height: &usize, width_scaled: &usize) -> u8 {
-    let (y, x) = (p / width_scaled, p % width_scaled);
-    let (y_chunk, y_orig) = (y / height, y % height);
-    let (x_chunk, x_orig) = (x / width, x % width);
-    (risk[y_orig * height + x_orig] - 1 + x_chunk as u8 + y_chunk as u8) % RISK_MAX + 1
-}
-
-fn risk_top_left_top_right_bottom_right(
-    input: &Input,
-    width_scaled: usize,
-    height_scaled: usize,
-) -> usize {
-    let Input {
-        risk,
-        width,
-        height,
-    } = input;
-    let risk_top_left_right: usize = (1..width_scaled)
-        .map(|p| get_node_risk(risk, p, width, height, &width_scaled) as usize)
-        .sum();
-    let risk_top_right_bottom: usize = (1..height_scaled)
-        .map(|p| {
-            get_node_risk(
-                risk,
-                (width_scaled - 1) + p * width_scaled,
-                width,
-                height,
-                &width_scaled,
-            ) as usize
-        })
-        .sum();
-    risk_top_left_right + risk_top_right_bottom
-}
-
 /// Dial's algorithm with improved buckets size upper bound
 fn shortest_path_from_top_left_to_bottom_right(input: &Input, map_scaling: &usize) -> usize {
     let Input {
@@ -107,14 +53,41 @@ fn shortest_path_from_top_left_to_bottom_right(input: &Input, map_scaling: &usiz
     } = input;
     let width_scaled = width * map_scaling;
     let height_scaled = height * map_scaling;
+
+    let get_node_risk = |p: usize| -> usize {
+        let (y, x) = (p / width_scaled, p % width_scaled);
+        let (y_chunk, y_orig) = (y / height, y % height);
+        let (x_chunk, x_orig) = (x / width, x % width);
+        (risk[y_orig * height + x_orig] as usize - 1 + x_chunk + y_chunk) % RISK_MAX + 1
+    };
+
+    let get_neighbors = |p: usize| -> Vec<usize> {
+        let (y, x) = (p / width_scaled, p % width_scaled);
+        vec![
+            (y.overflowing_sub(1).0, x),
+            (y, x + 1),
+            (y + 1, x),
+            (y, x.overflowing_sub(1).0),
+        ]
+        .into_iter()
+        .filter_map(|(y, x)| (y < height_scaled && x < width_scaled).then(|| y * height_scaled + x))
+        .collect::<Vec<_>>()
+    };
+
     let mut dist: Vec<_> = (0..width_scaled * height_scaled)
         .map(|_| usize::MAX)
         .collect();
 
     // Pre compute the risk of a path from top-left to bottom-right
     // Use the risk as the upper bound of buckets
-    let bucket_size_upper_bound: usize =
-        risk_top_left_top_right_bottom_right(input, width_scaled, height_scaled);
+    let bucket_size_upper_bound: usize = {
+        let risk_top_left_right: usize = (1..width_scaled).map(get_node_risk).sum();
+        let risk_top_right_bottom: usize = (2 * width_scaled - 1..dist.len())
+            .step_by(width_scaled)
+            .map(get_node_risk)
+            .sum();
+        risk_top_left_right + risk_top_right_bottom
+    };
 
     let buckets = vec![RefCell::new(vec![]); bucket_size_upper_bound];
     let goal = width_scaled * height_scaled - 1;
@@ -124,26 +97,25 @@ fn shortest_path_from_top_left_to_bottom_right(input: &Input, map_scaling: &usiz
 
     for cost in 0..buckets.len() {
         let nodes = buckets[cost].borrow();
-        for position in nodes.iter() {
-            if *position == goal {
+        for node in nodes.iter() {
+            if *node == goal {
                 return cost;
             }
 
             // Important as we may have already found a better way
-            if cost > dist[*position] {
+            if cost > dist[*node] {
                 continue;
             }
             // For each node we can reach, see if we can find a way with
             // a lower cost going through this node
-            for node in get_neighbors(position, &width_scaled, &height_scaled) {
-                let new_cost =
-                    cost + (get_node_risk(risk, node, width, height, &width_scaled) as usize);
+            for neighbor in get_neighbors(*node) {
+                let new_cost = cost + get_node_risk(neighbor);
 
                 // If so, add it to the frontier and continue
-                if new_cost < dist[node] {
-                    buckets[new_cost].borrow_mut().push(node);
+                if new_cost < dist[neighbor] {
+                    buckets[new_cost].borrow_mut().push(neighbor);
                     // Relaxation, we have now found a better way
-                    dist[node] = new_cost;
+                    dist[neighbor] = new_cost;
                 }
             }
         }
