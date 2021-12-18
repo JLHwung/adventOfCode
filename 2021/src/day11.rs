@@ -13,7 +13,6 @@ fn main() {
 const FLASH_THRESHOLD: u8 = 10;
 
 type Input = Vec<Vec<u8>>;
-type Location = (usize, usize);
 
 fn process(raw: &str) -> Input {
     raw.lines()
@@ -21,53 +20,48 @@ fn process(raw: &str) -> Input {
         .collect()
 }
 
-fn get_neighbors(y: usize, x: usize, width: &usize, height: &usize) -> Vec<Location> {
-    let result: Vec<_> = vec![
-        (y.overflowing_sub(1).0, x),
-        (y.overflowing_sub(1).0, x + 1),
-        (y, x + 1),
-        (y + 1, x + 1),
-        (y + 1, x),
-        (y + 1, x.overflowing_sub(1).0),
-        (y, x.overflowing_sub(1).0),
-        (y.overflowing_sub(1).0, x.overflowing_sub(1).0),
-    ]
-    .into_iter()
-    .filter(|(y, x)| y < height && x < width)
-    .collect();
-    result
-}
-
 /// Simulate the octupus flashing, returns a sum of flash counts
 fn simulate(input: &mut [Vec<u8>], width: &usize, height: &usize) -> usize {
+    let get_neighbors = |y: usize, x: usize| {
+        vec![
+            (y.overflowing_sub(1).0, x),
+            (y.overflowing_sub(1).0, x + 1),
+            (y, x + 1),
+            (y + 1, x + 1),
+            (y + 1, x),
+            (y + 1, x.overflowing_sub(1).0),
+            (y, x.overflowing_sub(1).0),
+            (y.overflowing_sub(1).0, x.overflowing_sub(1).0),
+        ]
+        .into_iter()
+        .filter(|(y, x)| y < height && x < width)
+    };
+
+    let mut flash_stack = vec![];
     // first pass: increment energy level by one
-    for line in input.iter_mut() {
-        for level in line.iter_mut() {
-            *level += 1;
+    // and build initial flash stack
+    for (y, line) in input.iter_mut().enumerate() {
+        for (x, level) in line.iter_mut().enumerate() {
+            *level = (*level + 1) % FLASH_THRESHOLD;
+            if *level == 0 {
+                flash_stack.push((y, x));
+            }
         }
     }
 
     let mut flashed_count = 0;
-    // second pass: process flashing
-    loop {
-        let last_flashed_count = flashed_count;
-        for y in 0..*height {
-            for x in 0..*width {
-                let level = &mut input[y][x];
-                if *level >= FLASH_THRESHOLD {
-                    flashed_count += 1;
-                    *level = 0;
-                    for (y, x) in get_neighbors(y, x, width, height) {
-                        let level = &mut input[y][x];
-                        if *level > 0 {
-                            *level += 1;
-                        }
-                    }
+    // second pass: consume flash stack and regiser new
+    // flashing octopus
+    while let Some((y, x)) = flash_stack.pop() {
+        flashed_count += 1;
+        for (y, x) in get_neighbors(y, x) {
+            let level = &mut input[y][x];
+            if *level > 0 {
+                *level = (*level + 1) % FLASH_THRESHOLD;
+                if *level == 0 {
+                    flash_stack.push((y, x));
                 }
             }
-        }
-        if last_flashed_count == flashed_count {
-            break;
         }
     }
     flashed_count
