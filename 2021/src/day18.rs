@@ -105,27 +105,31 @@ fn get_right_regular_number(sn: &SN, i: usize) -> Option<usize> {
 }
 
 /// Explode SN at given index i
-fn explode_at(sn: &mut SN, i: usize) {
+///
+/// Returns the leftmost regular number and positions
+/// the return value can be used to speed up finding next split index
+fn explode_at(sn: &mut SN, i: usize) -> Option<usize> {
     let left = &sn[i].unwrap();
     let right = &sn[i + 1].unwrap();
     let parent = i / 2;
     // replace pair to 0
     sn[parent] = Some(0);
-    let result = (
+    let (left_regular, right_regular) = (
         get_left_regular_number(sn, i),
         get_right_regular_number(sn, i + 1),
     );
-    if result.0.is_some() {
-        let left_i = result.0.unwrap();
+    if left_regular.is_some() {
+        let left_i = left_regular.unwrap();
         sn[left_i] = Some(sn[left_i].unwrap() + left);
     }
-    if result.1.is_some() {
-        let right_i = result.1.unwrap();
+    if right_regular.is_some() {
+        let right_i = right_regular.unwrap();
         sn[right_i] = Some(sn[right_i].unwrap() + right);
     }
     // purge the pair
     sn[i] = None;
     sn[i + 1] = None;
+    left_regular
 }
 
 /// Get the leftmost split index
@@ -137,7 +141,7 @@ fn get_first_split(sn: &SN) -> Option<usize> {
             if v >= SPLIT_THRESHOLD {
                 let depth = get_depth(i);
                 // Virtual left is the index of the left-most depth-3 child of given index
-                // (should it existed)
+                // (should it exist)
                 let left_most_depth_3_index = i << (3 - depth);
                 if left_most_depth_3_index < state.1 {
                     state.0 = i;
@@ -167,14 +171,21 @@ fn add(left: &SN, right: &SN) -> SN {
         }
     }
     // split
-    while let Some(i) = get_first_split(&sn) {
+    let mut next_split = None;
+    while let Some(i) = next_split.or_else(|| get_first_split(&sn)) {
         let v = sn[i].unwrap();
         sn[i] = None;
         sn[2 * i] = Some(v / 2);
         sn[2 * i + 1] = Some(v - v / 2);
         if 2 * i >= SN_SIZE / 2 {
-            explode_at(&mut sn, 2 * i);
+            if let Some(left) = explode_at(&mut sn, 2 * i) {
+                if sn[left].unwrap() >= SPLIT_THRESHOLD {
+                    next_split = Some(left);
+                    continue;
+                }
+            }
         }
+        next_split = None;
     }
     sn
 }
