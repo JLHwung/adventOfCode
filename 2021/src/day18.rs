@@ -131,9 +131,10 @@ fn explode_at(sn: &mut SN, i: usize) {
 /// Get the leftmost split index
 fn get_first_split(sn: &SN) -> Option<usize> {
     let mut state = (SN_SIZE / 2, SN_SIZE / 2);
-    for (i, value_option) in sn.iter().enumerate().take(SN_SIZE / 2).skip(2) {
-        if let Some(v) = value_option {
-            if *v >= SPLIT_THRESHOLD {
+    #[allow(clippy::needless_range_loop)]
+    for i in 2..SN_SIZE / 2 {
+        if let Some(v) = sn[i] {
+            if v >= SPLIT_THRESHOLD {
                 let depth = get_depth(i);
                 // Virtual left is the index of the left-most depth-3 child of given index
                 // (should it existed)
