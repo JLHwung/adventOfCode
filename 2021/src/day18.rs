@@ -118,12 +118,10 @@ fn explode_at(sn: &mut SN, i: usize) -> Option<usize> {
         get_left_regular_number(sn, i),
         get_right_regular_number(sn, i + 1),
     );
-    if left_regular.is_some() {
-        let left_i = left_regular.unwrap();
+    if let Some(left_i) = left_regular {
         sn[left_i] = Some(sn[left_i].unwrap() + left);
     }
-    if right_regular.is_some() {
-        let right_i = right_regular.unwrap();
+    if let Some(right_i) = right_regular {
         sn[right_i] = Some(sn[right_i].unwrap() + right);
     }
     // purge the pair
