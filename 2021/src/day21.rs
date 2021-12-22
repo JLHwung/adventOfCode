@@ -54,7 +54,7 @@ const DIE_3_FREQUENCY: [usize; DIE_3_MAX] = [1, 3, 6, 7, 6, 3, 1];
 type Cache = Vec<Vec<[[Option<[usize; 2]>; PAWN_MAX]; PAWN_MAX]>>;
 
 /// Problem (score_0, score_1, pawn_0, pawn_1, last_player)
-/// 
+///
 /// Count the winning universe of each player, when starting at initial
 /// score score_0, score_1, and initial pawn pawn_0, pawn_1
 fn problem(

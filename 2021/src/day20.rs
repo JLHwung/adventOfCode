@@ -13,17 +13,17 @@ fn main() {
     println!("Answer of p2: {}", p2(&input));
 }
 
-type Number = i16;
+type Number = usize;
 
 type Point = [Number; 2];
 
-type Algorithm = Vec<bool>;
+type Algorithm = Vec<u8>;
 
 // Delta array ordererd as
 // 8 7 6
 // 5 4 3
 // 2 1 0
-const DELTA: [Point; 9] = [
+const DELTA: [[isize; 2]; 9] = [
     [1, 1],
     [0, 1],
     [-1, 1],
@@ -35,11 +35,11 @@ const DELTA: [Point; 9] = [
     [-1, -1],
 ];
 
-const PADDING: i16 = 1;
+const PADDING: Number = 1;
 const ALGORITHM_SIZE: usize = 512;
 
 // An image is a HashSet of lit pixels
-type Image = HashSet<Point>;
+type Image = Vec<Vec<u8>>;
 
 struct Input {
     algorithm: Algorithm,
@@ -51,8 +51,8 @@ fn process(raw: &str) -> Input {
     let algorithm = algorithm_text
         .chars()
         .filter_map(|ch| match ch {
-            '#' => Some(true),
-            '.' => Some(false),
+            '#' => Some(1),
+            '.' => Some(0),
             _ => None,
         })
         .collect::<Vec<_>>();
@@ -66,61 +66,63 @@ fn process(raw: &str) -> Input {
             }
         }
     }
+    let image = image_rep
+        .lines()
+        .map(|line| {
+            line.chars()
+                .map(|ch| match ch {
+                    '#' => 1,
+                    '.' => 0,
+                    _ => unreachable!(),
+                })
+                .collect()
+        })
+        .collect();
 
     Input { algorithm, image }
 }
 
 fn enhanced_pixel_is_light(
-    [x0, y0]: &Point,
-    image: &Image,
-    algorithm: &[bool],
-    [x_min, y_min]: &Point,
-    [x_max, y_max]: &Point,
+    [x0, y0]: Point,
+    image: &[Vec<u8>],
+    algorithm: &[u8],
+    width: usize,
+    height: usize,
     border_is_light: bool,
-) -> bool {
+) -> u8 {
     let mut index = 0;
     for (i, [dx, dy]) in DELTA.iter().enumerate() {
-        let neighbor = [x0 + dx, y0 + dy];
-        let [x, y] = &neighbor;
-        if (border_is_light && (x < x_min || x > x_max || y < y_min || y > y_max))
-            || image.contains(&neighbor)
-        {
+        let neighbor = [
+            x0 as isize + dx - PADDING as isize,
+            y0 as isize + dy - PADDING as isize,
+        ];
+        let [x, y] = neighbor;
+        if x < 0 || x >= width as isize || y < 0 || y >= height as isize {
+            if border_is_light {
+                index |= 1 << i
+            }
+        } else if image[y as usize][x as usize] == 1 {
             index |= 1 << i
         }
     }
     algorithm[index]
 }
 
-fn enhance(image: &Image, algorithm: &[bool], border_is_light: &mut bool) -> Image {
-    let (mut x_min, mut y_min, mut x_max, mut y_max) =
-        (Number::MAX, Number::MAX, Number::MIN, Number::MIN);
+fn enhance(image: &[Vec<u8>], algorithm: &[u8], border_is_light: &mut bool) -> Image {
+    let height = image.len();
+    let width = image[0].len();
 
-    for p in image.iter() {
-        x_min = Number::min(x_min, p[0]);
-        y_min = Number::min(y_min, p[1]);
-        x_max = Number::max(x_max, p[0]);
-        y_max = Number::max(y_max, p[1]);
-    }
-
-    let mut output = Image::new();
-    for x in x_min - PADDING..=x_max + PADDING {
-        for y in y_min - PADDING..=y_max + PADDING {
-            if enhanced_pixel_is_light(
-                &[x, y],
-                image,
-                algorithm,
-                &[x_min, y_min],
-                &[x_max, y_max],
-                *border_is_light,
-            ) {
-                output.insert([x, y]);
-            }
+    let mut output = vec![vec![0; width + 2 * PADDING]; height + 2 * PADDING];
+    for (y, line) in output.iter_mut().enumerate() {
+        for (x, pixel) in line.iter_mut().enumerate() {
+            *pixel =
+                enhanced_pixel_is_light([x, y], image, algorithm, width, height, *border_is_light);
         }
     }
 
     // flip border pixels accoriding to algorithms
-    *border_is_light =
-        (algorithm[0] && !*border_is_light) || (algorithm[ALGORITHM_SIZE - 1] && *border_is_light);
+    *border_is_light = (algorithm[0] == 1 && !*border_is_light)
+        || (algorithm[ALGORITHM_SIZE - 1] == 1 && *border_is_light);
     output
 }
 
@@ -130,7 +132,11 @@ fn count_enhanced_light_pixels(input: &Input, round: usize) -> usize {
     for _ in 0..round {
         enhanced = enhance(&enhanced, &input.algorithm, &mut border_is_light);
     }
-    enhanced.len()
+    enhanced
+        .iter()
+        .flat_map(|line| line.iter())
+        .filter(|&&ch| ch == 1)
+        .count()
 }
 
 fn p1(input: &Input) -> usize {
