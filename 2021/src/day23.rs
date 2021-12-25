@@ -1,7 +1,7 @@
 use std::cmp::Ordering;
 use std::collections::{BinaryHeap, HashMap};
 use std::fmt::{Display, Formatter};
-use std::mem;
+use std::mem::swap;
 
 macro_rules! DATA_PATH {
     () => {
@@ -139,6 +139,7 @@ impl<const R: usize> State<R> {
         None
     }
 
+    // returns the deepest vacant room position in given room
     fn find_enter_room_pos(&self, room_index: usize) -> Option<usize> {
         let room = self.rooms[room_index];
         for (pos, status) in room.iter().enumerate().rev() {
@@ -154,10 +155,10 @@ impl<const R: usize> State<R> {
     }
 
     fn is_hallway_clear(&self, start_pos: usize, end_pos: usize) -> bool {
-        let range = match start_pos.cmp(&end_pos) {
-            Ordering::Equal => unreachable!(),
-            Ordering::Greater => end_pos..start_pos,
-            Ordering::Less => (start_pos + 1)..(end_pos + 1),
+        let range = if start_pos < end_pos {
+            (start_pos + 1)..(end_pos + 1)
+        } else {
+            end_pos..start_pos
         };
         self.hallway[range].iter().all(|x| x.is_none())
     }
@@ -177,7 +178,7 @@ impl<const R: usize> State<R> {
                         let steps = abs_sub(h_pos, intersection) + r_pos + 1;
                         let cost = amphipod.energy() * steps;
                         let mut state = *self;
-                        std::mem::swap(
+                        swap(
                             &mut state.hallway[h_pos],
                             &mut state.rooms[target_room][r_pos],
                         );
@@ -209,7 +210,7 @@ impl<const R: usize> State<R> {
                     let steps = abs_sub(h_pos, intersection) + r_pos + 1;
                     let cost = amphipod.energy() * steps;
                     let mut state = *self;
-                    mem::swap(
+                    swap(
                         &mut state.hallway[h_pos],
                         &mut state.rooms[source_room][r_pos],
                     );
@@ -228,9 +229,46 @@ impl<const R: usize> State<R> {
         results
     }
 
+    // estimate cost between this state to goal state. The heuristics
+    // should not overestimate the cost otherwise A* may not return
+    // optimal results
     fn heuristics(&self) -> usize {
-        // todo: figure out heuristics for further improvement
-        0
+        let mut h_score = 0;
+        for (room_index, room) in self.rooms.iter().enumerate() {
+            let mut will_be_popped = false;
+            let expected_amphipod_energy = 10usize.pow(room_index as u32);
+            let pos_above_room = self.hallway_pos_above_room(room_index);
+            for (r_pos, &status) in room.iter().enumerate().rev() {
+                if let Some(amphipod) = status {
+                    let target_room = amphipod.target_room();
+                    if target_room != room_index {
+                        let hallway_distance =
+                            abs_sub(pos_above_room, self.hallway_pos_above_room(target_room));
+                        // The amphipod moves from this position to its the pos above its target room
+                        h_score += amphipod.energy() * (hallway_distance + r_pos + 1);
+                        // The expected amphipod moves from the pos above to this position
+                        h_score += expected_amphipod_energy * (r_pos + 1);
+                        // All amphipods upper than this position has to be popped out of the room
+                        will_be_popped = true;
+                    } else if will_be_popped {
+                        // The amphipod will be popped out to some pos around room entrance and the pushed back
+                        h_score += 2 * expected_amphipod_energy * (r_pos + 1 + 1);
+                    }
+                } else {
+                    // The expected amphipod moves from the pos above to this vacant position
+                    h_score += expected_amphipod_energy * (r_pos + 1);
+                }
+            }
+        }
+        for (h_pos, status) in self.hallway.iter().enumerate() {
+            if let Some(amphipod) = status {
+                let target_room = amphipod.target_room();
+                let intersection = self.hallway_pos_above_room(target_room);
+                // Moves from hallway to the pos above its target room
+                h_score += amphipod.energy() * (abs_sub(h_pos, intersection));
+            }
+        }
+        h_score
     }
 }
 
@@ -271,7 +309,7 @@ impl PartialOrd for QueueItem {
     }
 }
 
-/// Dijkstra Algorithm
+/// A* Search
 fn solve<const R: usize>(initial_state: State<R>) -> usize {
     let mut g_scores = HashMap::from([(initial_state.encode(), 0usize)]);
     let mut heap = BinaryHeap::from(vec![QueueItem {
@@ -561,6 +599,38 @@ mod test {
         state.hallway[3] = Some(Amphipod::B);
         let moves = state.hallway_to_room_moves();
         assert_eq!(moves.len(), 0);
+    }
+
+    #[test]
+    fn test_heuristics_2() {
+        let mut state = State::<2>::goal();
+        state.rooms[1][0] = None;
+        state.hallway[3] = Some(Amphipod::B);
+        assert_eq!(state.heuristics(), Amphipod::B.energy() * 2);
+
+        let mut state = State::<2>::goal();
+        state.rooms[0][0] = Some(Amphipod::B);
+        assert_eq!(
+            state.heuristics(),
+            Amphipod::B.energy() * 3 + Amphipod::A.energy() * 1
+        );
+
+        let mut state = State::<2>::goal();
+        state.rooms[0][0] = Some(Amphipod::B);
+        state.rooms[1][0] = Some(Amphipod::A);
+        assert_eq!(
+            state.heuristics(),
+            Amphipod::B.energy() * 4 + Amphipod::A.energy() * 4
+        );
+
+        let mut state = State::<2>::goal();
+        state.rooms[0][0] = Some(Amphipod::B);
+        state.rooms[1][0] = None;
+        state.hallway[0] = Some(Amphipod::A);
+        assert_eq!(
+            state.heuristics(),
+            Amphipod::B.energy() * 4 + Amphipod::A.energy() * 3
+        );
     }
 
     #[test]
