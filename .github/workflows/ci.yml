@@ -11,6 +11,6 @@ jobs:
         working-directory: "2021"
     steps:
       - uses: actions/checkout@v2
-      - run: cargo check
+      - run: cargo check --release
       - run: cargo test --release
       - run: cargo clippy -- -D warnings
